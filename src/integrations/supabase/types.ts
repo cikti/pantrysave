@@ -108,6 +108,7 @@ export type Database = {
           reason: string | null
           seller_name: string | null
           status: Database["public"]["Enums"]["listing_status"]
+          stock_quantity: number
           unit_type: string
           updated_at: string
           user_id: string
@@ -135,6 +136,7 @@ export type Database = {
           reason?: string | null
           seller_name?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
+          stock_quantity?: number
           unit_type?: string
           updated_at?: string
           user_id: string
@@ -162,6 +164,7 @@ export type Database = {
           reason?: string | null
           seller_name?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
+          stock_quantity?: number
           unit_type?: string
           updated_at?: string
           user_id?: string
