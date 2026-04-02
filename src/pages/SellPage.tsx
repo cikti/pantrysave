@@ -1,19 +1,26 @@
 import { useState } from "react";
-import { ArrowLeft, Camera, ImagePlus } from "lucide-react";
+import { ArrowLeft, Camera, ImagePlus, Truck, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { categories } from "@/data/mockData";
 import { motion } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
+import LocationPicker from "@/components/LocationPicker";
+import { useCreateListing } from "@/hooks/useListings";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const conditions = ["Near Expiry", "Overstock", "Imperfect Look"];
-
-const steps = ["Photo", "Details", "Pricing"];
+const steps = ["Photo", "Details", "Location", "Pricing"];
 
 const SellPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const createListing = useCreateListing();
   const [currentStep, setCurrentStep] = useState(0);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     name: "",
     category: "",
@@ -21,14 +28,20 @@ const SellPage = () => {
     condition: "",
     originalPrice: "",
     discountPrice: "",
+    deliveryType: "pickup" as "pickup" | "third_party",
+    latitude: null as number | null,
+    longitude: null as number | null,
+    address: "",
+    reason: "",
   });
 
-  const update = (key: string, val: string) =>
+  const update = (key: string, val: any) =>
     setForm((p) => ({ ...p, [key]: val }));
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImageFile(file);
       const reader = new FileReader();
       reader.onload = (ev) => {
         setImagePreview(ev.target?.result as string);
@@ -38,17 +51,59 @@ const SellPage = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("You rescued this item! 🌿", {
-      description: "Your listing is now live",
-    });
-    navigate("/");
+    if (!user) return;
+    setSubmitting(true);
+
+    try {
+      let image_url: string | undefined;
+
+      // Upload image if provided
+      if (imageFile) {
+        const ext = imageFile.name.split(".").pop();
+        const path = `${user.id}/${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("avatars")
+          .upload(path, imageFile);
+        if (!uploadErr) {
+          const { data: urlData } = supabase.storage
+            .from("avatars")
+            .getPublicUrl(path);
+          image_url = urlData.publicUrl;
+        }
+      }
+
+      await createListing.mutateAsync({
+        name: form.name,
+        category: form.category || undefined,
+        condition: form.condition || undefined,
+        weight: form.weight || undefined,
+        original_price: parseFloat(form.originalPrice),
+        discount_price: parseFloat(form.discountPrice),
+        image_url,
+        latitude: form.latitude ?? undefined,
+        longitude: form.longitude ?? undefined,
+        address: form.address || undefined,
+        delivery_type: form.deliveryType,
+        reason: form.reason || `${form.condition || "Discounted"} — perfectly good to use.`,
+      });
+
+      toast.success("You rescued this item! 🌿", {
+        description: "Your listing is now live",
+      });
+      navigate("/");
+    } catch {
+      toast.error("Failed to create listing");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const filledFields = [
     imagePreview,
     form.name && form.category && form.weight && form.condition,
+    form.latitude && form.longitude,
     form.originalPrice && form.discountPrice,
   ];
   const activeStep = filledFields.filter(Boolean).length;
@@ -98,23 +153,14 @@ const SellPage = () => {
         <form onSubmit={handleSubmit} className="px-5 space-y-5 mt-2">
           {/* Photo upload */}
           <label className="block cursor-pointer">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
+            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
             {imagePreview ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="w-full aspect-[4/3] rounded-2xl overflow-hidden relative"
               >
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                />
+                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                 <div className="absolute bottom-2 right-2 bg-card/80 backdrop-blur px-2 py-1 rounded-full text-[10px] text-muted-foreground flex items-center gap-1">
                   <ImagePlus size={12} /> Change
                 </div>
@@ -122,9 +168,7 @@ const SellPage = () => {
             ) : (
               <div className="w-full aspect-[4/3] rounded-2xl bg-card border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 active:bg-muted transition-colors">
                 <Camera size={32} className="text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  Tap to add photo
-                </span>
+                <span className="text-xs text-muted-foreground">Tap to add photo</span>
               </div>
             )}
           </label>
@@ -132,18 +176,16 @@ const SellPage = () => {
           <InputField
             label="Item / Bundle Name"
             value={form.name}
-            onChange={(v) => { update("name", v); if (v) setCurrentStep(Math.max(currentStep, 1)); }}
+            onChange={(v) => update("name", v)}
             placeholder="e.g. Vine Tomatoes"
           />
 
           <div>
-            <label className="text-xs font-medium text-foreground mb-1.5 block">
-              Category
-            </label>
+            <label className="text-xs font-medium text-foreground mb-1.5 block">Category</label>
             <select
               value={form.category}
               onChange={(e) => update("category", e.target.value)}
-              className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring input-glow transition-shadow"
+              className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
             >
               <option value="">Select category</option>
               {categories.slice(1).map((c) => (
@@ -160,13 +202,11 @@ const SellPage = () => {
           />
 
           <div>
-            <label className="text-xs font-medium text-foreground mb-1.5 block">
-              Condition
-            </label>
+            <label className="text-xs font-medium text-foreground mb-1.5 block">Condition</label>
             <select
               value={form.condition}
               onChange={(e) => update("condition", e.target.value)}
-              className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring input-glow transition-shadow"
+              className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
             >
               <option value="">Select condition</option>
               {conditions.map((c) => (
@@ -175,11 +215,59 @@ const SellPage = () => {
             </select>
           </div>
 
+          <InputField
+            label="Why it's discounted"
+            value={form.reason}
+            onChange={(v) => update("reason", v)}
+            placeholder="e.g. Approaching best-before date but safe to eat"
+          />
+
+          {/* Location picker */}
+          <LocationPicker
+            latitude={form.latitude}
+            longitude={form.longitude}
+            address={form.address}
+            onLocationChange={(lat, lng) => {
+              update("latitude", lat);
+              update("longitude", lng);
+            }}
+            onAddressChange={(a) => update("address", a)}
+          />
+
+          {/* Delivery type */}
+          <div>
+            <label className="text-xs font-medium text-foreground mb-2 block">Delivery Option</label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => update("deliveryType", "pickup")}
+                className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-3 text-xs font-medium transition-all active:scale-95 ${
+                  form.deliveryType === "pickup"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-card text-foreground"
+                }`}
+              >
+                <MapPin size={14} /> Self Pickup
+              </button>
+              <button
+                type="button"
+                onClick={() => update("deliveryType", "third_party")}
+                className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-3 text-xs font-medium transition-all active:scale-95 ${
+                  form.deliveryType === "third_party"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-card text-foreground"
+                }`}
+              >
+                <Truck size={14} /> Third-party Delivery
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <InputField
               label="Original Price (RM)"
               value={form.originalPrice}
-              onChange={(v) => { update("originalPrice", v); if (v) setCurrentStep(Math.max(currentStep, 2)); }}
+              onChange={(v) => update("originalPrice", v)}
               placeholder="0.00"
               type="number"
             />
@@ -194,10 +282,11 @@ const SellPage = () => {
 
           <motion.button
             type="submit"
+            disabled={submitting || !form.name || !form.originalPrice || !form.discountPrice}
             whileTap={{ scale: 0.96 }}
-            className="w-full bg-primary text-primary-foreground font-semibold py-4 rounded-2xl shadow-lg transition-transform"
+            className="w-full bg-primary text-primary-foreground font-semibold py-4 rounded-2xl shadow-lg transition-transform disabled:opacity-50"
           >
-            List Item
+            {submitting ? "Listing..." : "List Item"}
           </motion.button>
         </form>
       </div>
@@ -206,28 +295,18 @@ const SellPage = () => {
 };
 
 const InputField = ({
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = "text",
+  label, value, onChange, placeholder, type = "text",
 }: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  type?: string;
+  label: string; value: string; onChange: (v: string) => void; placeholder: string; type?: string;
 }) => (
   <div>
-    <label className="text-xs font-medium text-foreground mb-1.5 block">
-      {label}
-    </label>
+    <label className="text-xs font-medium text-foreground mb-1.5 block">{label}</label>
     <input
       type={type}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring input-glow transition-shadow"
+      className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
     />
   </div>
 );

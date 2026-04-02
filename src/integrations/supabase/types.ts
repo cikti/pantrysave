@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      listings: {
+        Row: {
+          address: string | null
+          category: string | null
+          condition: string | null
+          created_at: string
+          delivery_type: Database["public"]["Enums"]["delivery_type"]
+          discount_price: number
+          id: string
+          image_url: string | null
+          latitude: number | null
+          longitude: number | null
+          name: string
+          original_price: number
+          reason: string | null
+          status: Database["public"]["Enums"]["listing_status"]
+          updated_at: string
+          user_id: string
+          weight: string | null
+        }
+        Insert: {
+          address?: string | null
+          category?: string | null
+          condition?: string | null
+          created_at?: string
+          delivery_type?: Database["public"]["Enums"]["delivery_type"]
+          discount_price: number
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          original_price: number
+          reason?: string | null
+          status?: Database["public"]["Enums"]["listing_status"]
+          updated_at?: string
+          user_id: string
+          weight?: string | null
+        }
+        Update: {
+          address?: string | null
+          category?: string | null
+          condition?: string | null
+          created_at?: string
+          delivery_type?: Database["public"]["Enums"]["delivery_type"]
+          discount_price?: number
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          original_price?: number
+          reason?: string | null
+          status?: Database["public"]["Enums"]["listing_status"]
+          updated_at?: string
+          user_id?: string
+          weight?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -46,7 +106,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      delivery_type: "pickup" | "third_party"
+      listing_status: "available" | "reserved" | "sold"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -173,6 +234,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      delivery_type: ["pickup", "third_party"],
+      listing_status: ["available", "reserved", "sold"],
+    },
   },
 } as const
