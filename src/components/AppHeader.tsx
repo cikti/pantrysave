@@ -1,5 +1,6 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Search } from "lucide-react";
+import UserAvatar from "@/components/UserAvatar";
 
 const AppHeader = () => {
   return (
@@ -10,9 +11,12 @@ const AppHeader = () => {
           PantrySave
         </h1>
       </div>
-      <button className="w-9 h-9 rounded-full bg-muted flex items-center justify-center active:scale-95 transition-transform">
-        <Search size={18} className="text-foreground" />
-      </button>
+      <div className="flex items-center gap-3">
+        <button className="w-9 h-9 rounded-full bg-muted flex items-center justify-center active:scale-95 transition-transform">
+          <Search size={18} className="text-foreground" />
+        </button>
+        <UserAvatar size="sm" />
+      </div>
     </header>
   );
 };
