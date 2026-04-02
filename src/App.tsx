@@ -55,6 +55,7 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route path="/points" element={<ProtectedRoute><PointsPage /></ProtectedRoute>} />
               <Route path="/map" element={<MapPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

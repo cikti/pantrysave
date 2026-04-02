@@ -22,6 +22,7 @@ const navItems = [
   { title: "Sell / List", url: "/sell", icon: PlusCircle },
   { title: "Cart", url: "/cart", icon: ShoppingCart },
   { title: "Reserved", url: "/reserved", icon: Package },
+  { title: "Points", url: "/points", icon: Coins },
 ];
 
 export function AppSidebar() {
