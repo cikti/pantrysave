@@ -77,6 +77,7 @@ const CartPage = () => {
 
   const handleConfirmOrder = () => {
     if (!deliveryChoice) { toast.error("Please select a delivery option"); return; }
+    // Reserve items during checkout
     selectedItems.forEach((item) => {
       if (!item.isMock) {
         updateListingStatus.mutate({ id: item.listing_id, status: "reserved" });
