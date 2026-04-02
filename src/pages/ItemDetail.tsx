@@ -70,12 +70,22 @@ const ItemDetail = () => {
   // Detect if listing is weight-based or quantity-based
   const isWeightBased = useMemo(() => {
     const w = ((item?.weight) || "").toLowerCase();
-    return /\d+\s*(kg|g)\b/.test(w);
+    return /\d+(\.\d+)?\s*(kg|g)\b/.test(w);
   }, [item?.weight]);
 
   const weightUnit = useMemo(() => {
     const w = ((item?.weight) || "").toLowerCase();
     return w.includes("kg") ? "kg" : "g";
+  }, [item?.weight]);
+
+  // Parse max from weight string (e.g. "1kg" → 1, "500g" → 500, "6 pcs" → 6)
+  const maxAmount = useMemo(() => {
+    const w = ((item?.weight) || "").toLowerCase();
+    const weightMatch = w.match(/([\d.]+)\s*(kg|g)/);
+    if (weightMatch) return parseFloat(weightMatch[1]);
+    const qtyMatch = w.match(/(\d+)/);
+    if (qtyMatch) return parseInt(qtyMatch[1]);
+    return undefined;
   }, [item?.weight]);
 
   if (!item) {
