@@ -3,7 +3,7 @@ import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info, Square, Ch
 import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useUpdateListingStatus } from "@/hooks/useListings";
+import { useUpdateListingStatus, usePurchaseListing } from "@/hooks/useListings";
 import { usePoints } from "@/hooks/usePoints";
 import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
