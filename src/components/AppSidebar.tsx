@@ -59,7 +59,7 @@ export function AppSidebar() {
                       <div className="relative mr-2">
                         <item.icon className="h-4 w-4" />
                         {item.title === "Cart" && cartCount > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-[#EF4444] text-white text-[11px] font-bold rounded-full flex items-center justify-center px-1">
+                          <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] text-white text-[11px] font-bold rounded-full flex items-center justify-center px-1 bg-primary">
                             {cartCount > 99 ? "99+" : cartCount}
                           </span>
                         )}
