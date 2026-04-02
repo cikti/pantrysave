@@ -12,7 +12,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="min-h-screen max-w-lg mx-auto relative">
         {children}
         <BottomNav />
-        <ChatBox sellerName="Local Seller" />
       </div>
     );
   }
