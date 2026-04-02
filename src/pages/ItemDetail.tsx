@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { motion, useScroll, useTransform } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import { useListings } from "@/hooks/useListings";
+import { useCart } from "@/contexts/CartContext";
 
 const badgeColors: Record<string, string> = {
   expiry: "bg-[hsl(var(--badge-expiry))] text-primary-foreground",
