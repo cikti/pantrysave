@@ -28,6 +28,7 @@ const CartPage = () => {
   const [orderComplete, setOrderComplete] = useState(false);
   const [showFPX, setShowFPX] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showPointsFloat, setShowPointsFloat] = useState<number | null>(null);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
