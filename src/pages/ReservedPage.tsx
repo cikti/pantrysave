@@ -3,6 +3,7 @@ import { ArrowLeft, MapPin, Truck, Package, Check, ExternalLink } from "lucide-r
 import { useNavigate } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePoints } from "@/hooks/usePoints";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
