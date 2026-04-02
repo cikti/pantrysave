@@ -91,6 +91,7 @@ export type Database = {
           category: string | null
           condition: string | null
           created_at: string
+          delivery_fee: number | null
           delivery_service: string | null
           delivery_type: Database["public"]["Enums"]["delivery_type"]
           discount_price: number
@@ -105,6 +106,7 @@ export type Database = {
           price_per_unit: number | null
           pricing_type: string
           reason: string | null
+          seller_name: string | null
           status: Database["public"]["Enums"]["listing_status"]
           unit_type: string
           updated_at: string
@@ -116,6 +118,7 @@ export type Database = {
           category?: string | null
           condition?: string | null
           created_at?: string
+          delivery_fee?: number | null
           delivery_service?: string | null
           delivery_type?: Database["public"]["Enums"]["delivery_type"]
           discount_price: number
@@ -130,6 +133,7 @@ export type Database = {
           price_per_unit?: number | null
           pricing_type?: string
           reason?: string | null
+          seller_name?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
           unit_type?: string
           updated_at?: string
@@ -141,6 +145,7 @@ export type Database = {
           category?: string | null
           condition?: string | null
           created_at?: string
+          delivery_fee?: number | null
           delivery_service?: string | null
           delivery_type?: Database["public"]["Enums"]["delivery_type"]
           discount_price?: number
@@ -155,6 +160,7 @@ export type Database = {
           price_per_unit?: number | null
           pricing_type?: string
           reason?: string | null
+          seller_name?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
           unit_type?: string
           updated_at?: string
