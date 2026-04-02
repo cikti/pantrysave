@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ShoppingCart, Info, Check } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Info, Check, MapPin, Truck } from "lucide-react";
 import { groceryItems } from "@/data/mockData";
 import { toast } from "sonner";
 import { motion, useScroll, useTransform } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
+import { useListings } from "@/hooks/useListings";
 
 const badgeColors: Record<string, string> = {
   expiry: "bg-[hsl(var(--badge-expiry))] text-primary-foreground",
@@ -15,14 +16,50 @@ const badgeColors: Record<string, string> = {
 const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const item = groceryItems.find((i) => i.id === id);
   const [reserved, setReserved] = useState(false);
   const [showFloat, setShowFloat] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-
   const { scrollY } = useScroll();
   const imageScale = useTransform(scrollY, [0, 200], [1, 1.15]);
   const imageOpacity = useTransform(scrollY, [0, 300], [1, 0.7]);
+  const { data: dbListings } = useListings();
+
+  // Check if it's a DB listing
+  const isDbListing = id?.startsWith("db-");
+  const dbId = isDbListing ? id.replace("db-", "") : null;
+  const dbItem = dbListings?.find((l) => l.id === dbId);
+  const mockItem = !isDbListing ? groceryItems.find((i) => i.id === id) : null;
+
+  // Normalize item data
+  const item = mockItem
+    ? {
+        name: mockItem.name,
+        seller: mockItem.seller,
+        image: mockItem.image,
+        weight: mockItem.weight,
+        originalPrice: mockItem.originalPrice,
+        discountPrice: mockItem.clearancePrice,
+        badge: mockItem.badge,
+        badgeType: mockItem.badgeType,
+        reason: mockItem.reason,
+        deliveryType: null as string | null,
+        address: null as string | null,
+      }
+    : dbItem
+    ? {
+        name: dbItem.name,
+        seller: dbItem.address || "Local seller",
+        image: dbItem.image_url || "",
+        weight: dbItem.weight || "",
+        originalPrice: Number(dbItem.original_price),
+        discountPrice: Number(dbItem.discount_price),
+        badge: dbItem.condition || "Discounted",
+        badgeType: "overstock" as const,
+        reason: dbItem.reason || "Discounted item",
+        deliveryType: dbItem.delivery_type,
+        address: dbItem.address,
+      }
+    : null;
 
   if (!item) {
     return (
@@ -32,10 +69,8 @@ const ItemDetail = () => {
     );
   }
 
-  const saving = (item.originalPrice - item.clearancePrice).toFixed(2);
-  const discount = Math.round(
-    ((item.originalPrice - item.clearancePrice) / item.originalPrice) * 100
-  );
+  const saving = (item.originalPrice - item.discountPrice).toFixed(2);
+  const discount = Math.round(((item.originalPrice - item.discountPrice) / item.originalPrice) * 100);
 
   const handleReserve = () => {
     if (reserved) return;
@@ -50,128 +85,101 @@ const ItemDetail = () => {
   return (
     <PageTransition>
       <div className="min-h-screen pb-28" ref={scrollRef}>
-        {/* Image with parallax */}
         <div className="relative overflow-hidden">
-          <motion.img
-            src={item.image}
-            alt={item.name}
-            width={640}
-            height={640}
-            className="w-full aspect-square object-cover"
-            style={{ scale: imageScale, opacity: imageOpacity }}
-          />
+          {item.image ? (
+            <motion.img
+              src={item.image}
+              alt={item.name}
+              width={640}
+              height={640}
+              className="w-full aspect-square object-cover"
+              style={{ scale: imageScale, opacity: imageOpacity }}
+            />
+          ) : (
+            <div className="w-full aspect-square bg-muted" />
+          )}
           <button
             onClick={() => navigate(-1)}
-            className="absolute top-4 left-4 w-9 h-9 rounded-full bg-warm-white/80 backdrop-blur flex items-center justify-center shadow-sm active:scale-90 transition-transform"
+            className="absolute top-4 left-4 w-9 h-9 rounded-full bg-background/80 backdrop-blur flex items-center justify-center shadow-sm active:scale-90 transition-transform"
           >
             <ArrowLeft size={18} />
           </button>
           <span
-            className={`absolute top-4 right-4 text-xs font-semibold px-3 py-1 rounded-full ${badgeColors[item.badgeType]} ${
-              item.badgeType === "expiry" ? "animate-pulse-badge" : ""
+            className={`absolute top-4 right-4 text-xs font-semibold px-3 py-1 rounded-full ${
+              badgeColors[item.badgeType] || "bg-primary text-primary-foreground"
             }`}
           >
             {item.badge}
           </span>
         </div>
 
-        {/* Details with slide-in animations */}
         <div className="px-5 pt-5">
-          <motion.p
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-xs text-muted-foreground"
-          >
+          <motion.p initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="text-xs text-muted-foreground">
             {item.seller}
           </motion.p>
-          <motion.h2
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.15 }}
-            className="text-xl font-bold text-foreground mt-1"
-          >
+          <motion.h2 initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }} className="text-xl font-bold text-foreground mt-1">
             {item.name}
           </motion.h2>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-sm text-muted-foreground mt-1"
-          >
-            {item.weight}
-          </motion.p>
+          {item.weight && (
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="text-sm text-muted-foreground mt-1">
+              {item.weight}
+            </motion.p>
+          )}
 
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="flex items-baseline gap-3 mt-3"
-          >
-            <span className="text-muted-foreground line-through text-sm">
-              RM{item.originalPrice.toFixed(2)}
-            </span>
-            <span className="text-2xl font-bold text-primary">
-              RM{item.clearancePrice.toFixed(2)}
-            </span>
-            <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded-full font-medium">
-              {discount}% off
-            </span>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="flex items-baseline gap-3 mt-3">
+            <span className="text-muted-foreground line-through text-sm">RM{item.originalPrice.toFixed(2)}</span>
+            <span className="text-2xl font-bold text-primary">RM{item.discountPrice.toFixed(2)}</span>
+            <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded-full font-medium">{discount}% off</span>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.35 }}
-            className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary bg-accent px-3 py-1 rounded-full"
-          >
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.35 }} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary bg-accent px-3 py-1 rounded-full">
             🎉 You save RM{saving}
           </motion.div>
 
+          {/* Delivery info */}
+          {item.deliveryType && (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }} className="mt-4 flex items-center gap-2 text-xs text-foreground">
+              {item.deliveryType === "pickup" ? (
+                <>
+                  <MapPin size={14} className="text-primary" />
+                  <span>Self Pickup{item.address ? ` — ${item.address}` : ""}</span>
+                </>
+              ) : (
+                <>
+                  <Truck size={14} className="text-primary" />
+                  <span>Third-party Delivery (Grab / Lalamove)</span>
+                </>
+              )}
+            </motion.div>
+          )}
+
           {/* Reason */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mt-6 bg-accent/60 rounded-xl p-4 flex gap-3"
-          >
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="mt-6 bg-accent/60 rounded-xl p-4 flex gap-3">
             <Info size={18} className="text-primary shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-semibold text-accent-foreground">
-                Why it's discounted
-              </p>
+              <p className="text-xs font-semibold text-accent-foreground">Why it's discounted</p>
               <p className="text-xs text-muted-foreground mt-1">{item.reason}</p>
             </div>
           </motion.div>
         </div>
 
-        {/* Floating points indicator */}
         {showFloat && (
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-            <span className="animate-float-up text-lg font-bold text-primary">
-              +50 points 🌿
-            </span>
+            <span className="animate-float-up text-lg font-bold text-primary">+50 points 🌿</span>
           </div>
         )}
 
-        {/* Sticky CTA with morph animation */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur-md border-t border-border z-30">
           <motion.button
             onClick={handleReserve}
             whileTap={!reserved ? { scale: 0.96 } : {}}
             className={`w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-colors duration-300 ${
-              reserved
-                ? "bg-accent text-primary"
-                : "bg-primary text-primary-foreground"
+              reserved ? "bg-accent text-primary" : "bg-primary text-primary-foreground"
             }`}
           >
             {reserved ? (
               <>
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                >
+                <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
                   <Check size={18} />
                 </motion.span>
                 Reserved ✓

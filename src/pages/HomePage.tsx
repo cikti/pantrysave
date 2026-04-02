@@ -5,29 +5,22 @@ import GroceryCard from "@/components/GroceryCard";
 import PageTransition from "@/components/PageTransition";
 import UserAvatar from "@/components/UserAvatar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useListings } from "@/hooks/useListings";
+import type { GroceryItem } from "@/data/mockData";
 
 const STORAGE_KEY = "pantrysave_recent_searches";
 const MAX_RECENT = 6;
 
 function getRecentSearches(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  } catch {
-    return [];
-  }
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
 }
-
 function saveRecentSearch(query: string) {
   const q = query.trim();
   if (!q) return;
-  const existing = getRecentSearches().filter((s) => s !== q);
-  const updated = [q, ...existing].slice(0, MAX_RECENT);
+  const updated = [q, ...getRecentSearches().filter((s) => s !== q)].slice(0, MAX_RECENT);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 }
-
-function clearRecentSearches() {
-  localStorage.removeItem(STORAGE_KEY);
-}
+function clearRecentSearches() { localStorage.removeItem(STORAGE_KEY); }
 
 const HomePage = () => {
   const [activeCategory, setActiveCategory] = useState("All");
@@ -36,13 +29,11 @@ const HomePage = () => {
   const [recentSearches, setRecentSearches] = useState<string[]>(getRecentSearches);
   const isMobile = useIsMobile();
   const searchRef = useRef<HTMLDivElement>(null);
+  const { data: dbListings } = useListings();
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setShowRecent(false);
-      }
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setShowRecent(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -50,27 +41,34 @@ const HomePage = () => {
 
   const commitSearch = useCallback((q: string) => {
     setSearchQuery(q);
-    if (q.trim()) {
-      saveRecentSearch(q.trim());
-      setRecentSearches(getRecentSearches());
-    }
+    if (q.trim()) { saveRecentSearch(q.trim()); setRecentSearches(getRecentSearches()); }
     setShowRecent(false);
   }, []);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") commitSearch(searchQuery);
-  };
+  const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === "Enter") commitSearch(searchQuery); };
+  const handleClearHistory = () => { clearRecentSearches(); setRecentSearches([]); };
 
-  const handleClearHistory = () => {
-    clearRecentSearches();
-    setRecentSearches([]);
-  };
+  // Convert DB listings to GroceryItem-like shape for display
+  const dbItems: GroceryItem[] = useMemo(() => {
+    return (dbListings || []).map((l) => ({
+      id: `db-${l.id}`,
+      name: l.name,
+      seller: l.address || "Local seller",
+      image: l.image_url || "",
+      category: l.category || "Fresh Produce",
+      weight: l.weight || "",
+      originalPrice: Number(l.original_price),
+      clearancePrice: Number(l.discount_price),
+      badge: l.condition || "Discounted",
+      badgeType: (l.condition === "Near Expiry" ? "expiry" : l.condition === "Imperfect Look" ? "imperfect" : "overstock") as GroceryItem["badgeType"],
+      reason: l.reason || "Discounted item",
+    }));
+  }, [dbListings]);
+
+  const allItems = useMemo(() => [...groceryItems, ...dbItems], [dbItems]);
 
   const filtered = useMemo(() => {
-    let items = activeCategory === "All"
-      ? groceryItems
-      : groceryItems.filter((i) => i.category === activeCategory);
-
+    let items = activeCategory === "All" ? allItems : allItems.filter((i) => i.category === activeCategory);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       items = items.filter(
@@ -82,24 +80,19 @@ const HomePage = () => {
           i.badge.toLowerCase().includes(q)
       );
     }
-
     return items;
-  }, [activeCategory, searchQuery]);
+  }, [activeCategory, searchQuery, allItems]);
 
   return (
     <PageTransition>
       <div className="min-h-screen pb-24 md:pb-8">
-        {/* Mobile Header */}
         {isMobile && (
           <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md px-4 pt-4 pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-lg font-bold text-foreground tracking-tight">
-                  PantrySave
-                </h1>
+                <h1 className="text-lg font-bold text-foreground tracking-tight">PantrySave</h1>
                 <button className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                  <MapPin size={12} />
-                  <span>Taman Melawati</span>
+                  <MapPin size={12} /><span>Taman Melawati</span>
                 </button>
               </div>
               <UserAvatar size="sm" />
@@ -107,7 +100,6 @@ const HomePage = () => {
           </header>
         )}
 
-        {/* Search bar with recent suggestions */}
         <div className="px-4 md:px-6 pt-3 pb-1" ref={searchRef}>
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -130,34 +122,23 @@ const HomePage = () => {
             )}
           </div>
 
-          {/* Recent searches dropdown */}
           {showRecent && !searchQuery && recentSearches.length > 0 && (
             <div className="mt-1.5 bg-card border border-border rounded-xl shadow-sm overflow-hidden">
               <div className="flex items-center justify-between px-3 py-2">
                 <span className="text-[11px] font-medium text-muted-foreground">Recent</span>
-                <button
-                  onClick={handleClearHistory}
-                  className="text-[11px] text-muted-foreground/70 flex items-center gap-1 active:scale-95 transition-transform"
-                >
-                  <Trash2 size={11} />
-                  Clear
+                <button onClick={handleClearHistory} className="text-[11px] text-muted-foreground/70 flex items-center gap-1 active:scale-95 transition-transform">
+                  <Trash2 size={11} /> Clear
                 </button>
               </div>
               {recentSearches.map((term) => (
-                <button
-                  key={term}
-                  onClick={() => commitSearch(term)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted/50 active:bg-muted transition-colors"
-                >
-                  <Clock size={13} className="text-muted-foreground shrink-0" />
-                  <span className="truncate">{term}</span>
+                <button key={term} onClick={() => commitSearch(term)} className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted/50 active:bg-muted transition-colors">
+                  <Clock size={13} className="text-muted-foreground shrink-0" /><span className="truncate">{term}</span>
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        {/* Category pills */}
         <div className="sticky top-0 md:top-0 z-30 bg-background/90 backdrop-blur-md px-4 md:px-6 py-3">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide snap-x-mandatory">
             {categories.map((cat) => (
@@ -165,9 +146,7 @@ const HomePage = () => {
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className={`whitespace-nowrap text-xs font-medium px-4 py-2 rounded-full transition-all duration-200 snap-center active:scale-95 ${
-                  activeCategory === cat
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-card text-muted-foreground"
+                  activeCategory === cat ? "bg-primary text-primary-foreground shadow-sm" : "bg-card text-muted-foreground"
                 }`}
               >
                 {cat}
@@ -176,7 +155,6 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* Grid */}
         <main className="px-4 md:px-6 mt-4">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
             {filtered.map((item, i) => (
@@ -186,9 +164,7 @@ const HomePage = () => {
           {filtered.length === 0 && (
             <div className="text-center mt-16">
               <p className="text-muted-foreground text-sm">No items found</p>
-              <p className="text-muted-foreground/70 text-xs mt-1">
-                Try different keywords or browse a category
-              </p>
+              <p className="text-muted-foreground/70 text-xs mt-1">Try different keywords or browse a category</p>
             </div>
           )}
         </main>
