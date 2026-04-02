@@ -3,6 +3,7 @@ import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useChat } from "@/contexts/ChatContext";
 import { useTotalUnread } from "@/hooks/useChat";
+import { useCart } from "@/contexts/CartContext";
 import {
   Sidebar,
   SidebarContent,
