@@ -1,15 +1,70 @@
-import { useState, useMemo } from "react";
-import { MapPin, Search, X } from "lucide-react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { MapPin, Search, X, Clock, Trash2 } from "lucide-react";
 import { categories, groceryItems } from "@/data/mockData";
 import GroceryCard from "@/components/GroceryCard";
 import PageTransition from "@/components/PageTransition";
 import UserAvatar from "@/components/UserAvatar";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+const STORAGE_KEY = "pantrysave_recent_searches";
+const MAX_RECENT = 6;
+
+function getRecentSearches(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentSearch(query: string) {
+  const q = query.trim();
+  if (!q) return;
+  const existing = getRecentSearches().filter((s) => s !== q);
+  const updated = [q, ...existing].slice(0, MAX_RECENT);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+}
+
+function clearRecentSearches() {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
 const HomePage = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showRecent, setShowRecent] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>(getRecentSearches);
   const isMobile = useIsMobile();
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowRecent(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const commitSearch = useCallback((q: string) => {
+    setSearchQuery(q);
+    if (q.trim()) {
+      saveRecentSearch(q.trim());
+      setRecentSearches(getRecentSearches());
+    }
+    setShowRecent(false);
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") commitSearch(searchQuery);
+  };
+
+  const handleClearHistory = () => {
+    clearRecentSearches();
+    setRecentSearches([]);
+  };
 
   const filtered = useMemo(() => {
     let items = activeCategory === "All"
@@ -52,26 +107,54 @@ const HomePage = () => {
           </header>
         )}
 
-        {/* Search bar */}
-        <div className="px-4 md:px-6 pt-3 pb-1">
+        {/* Search bar with recent suggestions */}
+        <div className="px-4 md:px-6 pt-3 pb-1" ref={searchRef}>
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setShowRecent(true)}
+              onKeyDown={handleKeyDown}
               placeholder="Search for food, items, or categories…"
               className="w-full h-10 pl-9 pr-9 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow"
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => { setSearchQuery(""); setShowRecent(false); }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground active:scale-90 transition-transform"
               >
                 <X size={16} />
               </button>
             )}
           </div>
+
+          {/* Recent searches dropdown */}
+          {showRecent && !searchQuery && recentSearches.length > 0 && (
+            <div className="mt-1.5 bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between px-3 py-2">
+                <span className="text-[11px] font-medium text-muted-foreground">Recent</span>
+                <button
+                  onClick={handleClearHistory}
+                  className="text-[11px] text-muted-foreground/70 flex items-center gap-1 active:scale-95 transition-transform"
+                >
+                  <Trash2 size={11} />
+                  Clear
+                </button>
+              </div>
+              {recentSearches.map((term) => (
+                <button
+                  key={term}
+                  onClick={() => commitSearch(term)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-muted/50 active:bg-muted transition-colors"
+                >
+                  <Clock size={13} className="text-muted-foreground shrink-0" />
+                  <span className="truncate">{term}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Category pills */}
