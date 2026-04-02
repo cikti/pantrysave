@@ -179,6 +179,14 @@ const FPXPaymentModal = ({
 
             {/* Footer */}
             <div className="p-4 border-t border-border space-y-2">
+              <button
+                onClick={() => setShowSellerMessage(true)}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-muted active:scale-95 transition-all disabled:opacity-50"
+              >
+                <MessageCircle size={14} />
+                Contact Seller
+              </button>
               {selectedBankData && (
                 <p className="text-xs text-muted-foreground text-center">
                   Paying <span className="font-semibold text-foreground">RM {amount.toFixed(2)}</span> via{" "}
@@ -215,6 +223,14 @@ const FPXPaymentModal = ({
               </div>
             </div>
           </motion.div>
+
+          <MessageSellerModal
+            open={showSellerMessage}
+            orderId={orderId}
+            merchantName={merchantName}
+            onClose={() => setShowSellerMessage(false)}
+            onMessageSent={() => toast.success("Message sent to seller! ✉️")}
+          />
         </motion.div>
       )}
     </AnimatePresence>
