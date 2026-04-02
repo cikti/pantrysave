@@ -225,7 +225,7 @@ const ChatBox = ({
                   </div>
                 )}
                 {sellerOnline && (
-                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-400 border-2 border-primary" />
+                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-primary border-2 border-card" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
