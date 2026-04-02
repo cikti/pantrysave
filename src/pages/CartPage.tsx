@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft } from "lucide-react";
+import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, ExternalLink, Check } from "lucide-react";
 import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +12,9 @@ const CartPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [deliveryChoice, setDeliveryChoice] = useState<"pickup" | "grab" | "lalamove" | null>(null);
+  const [orderComplete, setOrderComplete] = useState(false);
 
   if (!user) {
     return (
@@ -25,10 +28,17 @@ const CartPage = () => {
     );
   }
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
+    setShowCheckout(true);
+  };
+
+  const handleConfirmOrder = async () => {
+    if (!deliveryChoice) { toast.error("Please select a delivery option"); return; }
     await clearCart();
-    toast.success("Items reserved! 🌿 Nice save for the planet!");
-    navigate("/");
+    setShowCheckout(false);
+    setOrderComplete(true);
+    toast.success("Order placed! 🌿 Nice save for the planet!");
+    setTimeout(() => { setOrderComplete(false); navigate("/"); }, 2000);
   };
 
   const handleDecrease = (item: CartItem) => {
@@ -120,7 +130,7 @@ const CartPage = () => {
           </div>
         )}
 
-        {items.length > 0 && (
+        {items.length > 0 && !showCheckout && (
           <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border p-4 z-30">
             <div className="flex justify-between items-center mb-3">
               <span className="text-sm text-muted-foreground">Total</span>
@@ -131,10 +141,112 @@ const CartPage = () => {
               onClick={handleCheckout}
               className="w-full bg-primary text-primary-foreground font-semibold py-4 rounded-2xl shadow-lg"
             >
-              Reserve All ({count} item{count !== 1 ? "s" : ""})
+              Buy ({count} item{count !== 1 ? "s" : ""})
             </motion.button>
           </div>
         )}
+
+        {/* Checkout: Choose delivery */}
+        <AnimatePresence>
+          {showCheckout && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center"
+              onClick={() => setShowCheckout(false)}
+            >
+              <motion.div
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 100, opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-card rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-xl border border-border"
+              >
+                <h3 className="text-base font-bold text-foreground text-center mb-1">How do you want to get your items?</h3>
+                <p className="text-xs text-muted-foreground text-center mb-5">Choose your preferred collection method</p>
+
+                <div className="space-y-3">
+                  {([
+                    { key: "pickup" as const, icon: MapPin, label: "Self Pickup", desc: "Collect from the seller's location" },
+                    { key: "grab" as const, icon: Truck, label: "Grab Delivery", desc: "Have it delivered via Grab" },
+                    { key: "lalamove" as const, icon: Truck, label: "Lalamove Delivery", desc: "Have it delivered via Lalamove" },
+                  ]).map((opt) => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setDeliveryChoice(opt.key)}
+                      className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${
+                        deliveryChoice === opt.key
+                          ? "border-primary bg-primary/5"
+                          : "border-border bg-card hover:border-muted-foreground/30"
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                        deliveryChoice === opt.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                      }`}>
+                        <opt.icon size={18} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-foreground">{opt.label}</p>
+                        <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                      </div>
+                      {deliveryChoice === opt.key && <Check size={18} className="text-primary shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex justify-between items-center mt-5 mb-3">
+                  <span className="text-sm text-muted-foreground">Total</span>
+                  <span className="text-lg font-bold text-primary">RM{total.toFixed(2)}</span>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowCheckout(false)}
+                    className="flex-1 py-3 rounded-xl bg-muted text-sm font-medium text-foreground active:scale-95 transition-transform"
+                  >
+                    Back
+                  </button>
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleConfirmOrder}
+                    className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${
+                      deliveryChoice
+                        ? "bg-primary text-primary-foreground shadow-lg"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    Confirm Order
+                  </motion.button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Order complete overlay */}
+        <AnimatePresence>
+          {orderComplete && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-background/95 flex flex-col items-center justify-center gap-4"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="w-20 h-20 rounded-full bg-primary flex items-center justify-center"
+              >
+                <Check size={36} className="text-primary-foreground" />
+              </motion.div>
+              <p className="text-lg font-bold text-foreground">Order Placed! 🌿</p>
+              <p className="text-sm text-muted-foreground">Redirecting you home...</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Remove confirmation dialog */}
         <AnimatePresence>
