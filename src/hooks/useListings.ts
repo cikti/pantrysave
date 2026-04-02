@@ -69,6 +69,23 @@ export function useListings() {
   });
 }
 
+export function useListingById(id: string | undefined) {
+  return useQuery({
+    queryKey: ["listing", id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from("listings")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as Listing | null;
+    },
+    enabled: !!id,
+  });
+}
+
 export function useMyListings() {
   const { user } = useAuth();
   return useQuery({
