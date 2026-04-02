@@ -75,20 +75,35 @@ const ItemDetail = () => {
     );
   }
 
-  const saving = (item.originalPrice - item.discountPrice).toFixed(2);
-  const discount = Math.round(((item.originalPrice - item.discountPrice) / item.originalPrice) * 100);
+  // Detect if listing is weight-based or quantity-based
+  const isWeightBased = useMemo(() => {
+    const w = (item.weight || "").toLowerCase();
+    return /\d+\s*(kg|g)\b/.test(w);
+  }, [item.weight]);
+
+  const weightUnit = useMemo(() => {
+    const w = (item.weight || "").toLowerCase();
+    return w.includes("kg") ? "kg" : "g";
+  }, [item.weight]);
+
+  const subtotal = isWeightBased
+    ? item.discountPrice * weightAmt * (weightUnit === "g" ? 0.001 : 1)
+    : item.discountPrice * qty;
 
   const handleReserve = async () => {
     if (reserved) return;
+    const cartQty = isWeightBased ? 1 : qty;
+    const weightLabel = isWeightBased ? `${weightAmt} ${weightUnit}` : item.weight;
+
     if (isDbListing && dbId) {
-      await addToCart(dbId);
+      await addToCart(dbId, cartQty, undefined);
     } else if (mockItem && id) {
-      await addToCart(id, 1, {
+      await addToCart(id, cartQty, {
         name: item.name,
         image_url: item.image,
-        discount_price: item.discountPrice,
+        discount_price: isWeightBased ? subtotal : item.discountPrice,
         original_price: item.originalPrice,
-        weight: item.weight,
+        weight: weightLabel || item.weight,
       });
     }
     setReserved(true);
