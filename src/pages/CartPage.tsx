@@ -90,9 +90,10 @@ const CartPage = () => {
 
   const handlePaymentSuccess = async (_paymentUrl: string) => {
     setShowFPX(false);
+    // Decrement stock and mark sold if stock reaches 0
     for (const item of selectedItems) {
       if (!item.isMock) {
-        await updateListingStatus.mutateAsync({ id: item.listing_id, status: "sold" });
+        await purchaseListing.mutateAsync({ id: item.listing_id, quantity: item.quantity });
       }
     }
     // Earn points: 1 point per RM1 spent (rounded)
