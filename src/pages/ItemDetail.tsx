@@ -76,8 +76,12 @@ const ItemDetail = () => {
   const saving = (item.originalPrice - item.discountPrice).toFixed(2);
   const discount = Math.round(((item.originalPrice - item.discountPrice) / item.originalPrice) * 100);
 
-  const handleReserve = () => {
+  const handleReserve = async () => {
     if (reserved) return;
+    // Add DB listings to cart
+    if (isDbListing && dbId) {
+      await addToCart(dbId);
+    }
     setReserved(true);
     setShowFloat(true);
     toast.success(`Nice save! 🌿 ${item.name} reserved!`, {
