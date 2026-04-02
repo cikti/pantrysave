@@ -1,12 +1,14 @@
 import { useState, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ShoppingCart, Info, Check, MapPin, Truck, Minus, Plus } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Info, Check, MapPin, Truck, Minus, Plus, MessageCircle } from "lucide-react";
 import { groceryItems } from "@/data/mockData";
 import { toast } from "sonner";
 import { motion, useScroll, useTransform } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import { useListings } from "@/hooks/useListings";
 import { useCart } from "@/contexts/CartContext";
+import { useChat } from "@/contexts/ChatContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const badgeColors: Record<string, string> = {
   expiry: "bg-[hsl(var(--badge-expiry))] text-primary-foreground",
