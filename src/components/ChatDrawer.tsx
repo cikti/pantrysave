@@ -329,7 +329,7 @@ function ChatHeader({ convo, productContext, isMobile, onBack, onClose }: {
   );
 }
 
-function MessageBubble({ msg, isOwn }: { msg: Message; isOwn: boolean }) {
+function MessageBubble({ msg, isOwn }: { msg: import("@/hooks/useChat").Message; isOwn: boolean }) {
   const time = format(new Date(msg.created_at), "HH:mm");
 
   return (
