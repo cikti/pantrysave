@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Send, Check, CheckCheck, Paperclip, Smile, ArrowLeft, Image as ImageIcon } from "lucide-react";
+import { X, Send, Check, CheckCheck, Paperclip, Smile, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChat, type ProductContext } from "@/contexts/ChatContext";
 import { useConversations, useMessages, useSendMessage, useCreateConversation, type Conversation } from "@/hooks/useChat";
@@ -25,7 +25,6 @@ const ChatDrawer = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [showConvoList, setShowConvoList] = useState(true);
 
-  // When opened with product context, create/find conversation
   useEffect(() => {
     if (!isOpen || !productContext || !user) return;
     (async () => {
@@ -43,7 +42,6 @@ const ChatDrawer = () => {
     })();
   }, [isOpen, productContext, user]);
 
-  // When opened with a specific conversation ID
   useEffect(() => {
     if (activeConversationId) {
       setSelectedConvoId(activeConversationId);
@@ -51,7 +49,6 @@ const ChatDrawer = () => {
     }
   }, [activeConversationId]);
 
-  // Reset on close
   useEffect(() => {
     if (!isOpen) {
       setSelectedConvoId(null);
@@ -61,7 +58,6 @@ const ChatDrawer = () => {
     }
   }, [isOpen]);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -96,7 +92,6 @@ const ChatDrawer = () => {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -105,7 +100,6 @@ const ChatDrawer = () => {
             className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50"
           />
 
-          {/* Drawer */}
           <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
@@ -114,7 +108,7 @@ const ChatDrawer = () => {
             style={{ width: drawerWidth }}
             className="fixed top-0 right-0 h-full bg-background z-50 shadow-2xl flex"
           >
-            {/* Conversation list — visible on desktop always, on mobile only when showConvoList */}
+            {/* Conversation list */}
             {(!isMobile || showConvoList) && (
               <div className={`${isMobile ? "w-full" : "w-[160px] min-w-[160px] border-r border-border"} flex flex-col`}>
                 <div className="h-14 flex items-center justify-between px-3 border-b border-border shrink-0">
@@ -138,7 +132,6 @@ const ChatDrawer = () => {
                         key={convo.id}
                         convo={convo}
                         isActive={selectedConvoId === convo.id}
-                        userId={user?.id || ""}
                         onClick={() => {
                           setSelectedConvoId(convo.id);
                           if (isMobile) setShowConvoList(false);
@@ -153,7 +146,6 @@ const ChatDrawer = () => {
             {/* Chat window */}
             {(!isMobile || !showConvoList) && (
               <div className="flex-1 flex flex-col min-w-0">
-                {/* Chat header */}
                 <ChatHeader
                   convo={selectedConvo}
                   productContext={productContext}
@@ -162,7 +154,6 @@ const ChatDrawer = () => {
                   onClose={closeChat}
                 />
 
-                {/* Messages area */}
                 <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2 bg-muted/30">
                   {!selectedConvoId ? (
                     <div className="flex items-center justify-center h-full">
@@ -187,10 +178,8 @@ const ChatDrawer = () => {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input area */}
                 {selectedConvoId && (
                   <div className="border-t border-border p-3 shrink-0">
-                    {/* Emoji picker */}
                     <AnimatePresence>
                       {showEmojiPicker && (
                         <motion.div
@@ -256,27 +245,31 @@ const ChatDrawer = () => {
   );
 };
 
-// Sub-components
+// --- Sub-components ---
 
-function ConversationItem({ convo, isActive, userId, onClick }: { convo: Conversation; isActive: boolean; userId: string; onClick: () => void }) {
+function ConversationItem({ convo, isActive, onClick }: {
+  convo: Conversation;
+  isActive: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       onClick={onClick}
       className={`w-full flex items-start gap-2.5 p-3 text-left transition-colors hover:bg-muted/50 ${isActive ? "bg-muted" : ""}`}
     >
-      {/* Product thumbnail */}
-      <div className="w-9 h-9 rounded-lg overflow-hidden bg-muted shrink-0">
-        {convo.product_image ? (
-          <img src={convo.product_image} alt="" className="w-full h-full object-cover" />
+      {/* Other user's avatar */}
+      <div className="w-9 h-9 rounded-full overflow-hidden bg-muted shrink-0">
+        {convo.other_user_avatar ? (
+          <img src={convo.other_user_avatar} alt="" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
-            {convo.product_name?.[0] || "?"}
+            {convo.other_user_name?.[0]?.toUpperCase() || "?"}
           </div>
         )}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold text-foreground truncate">{convo.seller_name || "Seller"}</p>
+          <p className="text-xs font-semibold text-foreground truncate">{convo.other_user_name}</p>
           {convo.last_message_time && (
             <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
               {format(new Date(convo.last_message_time), "HH:mm")}
@@ -288,7 +281,7 @@ function ConversationItem({ convo, isActive, userId, onClick }: { convo: Convers
       </div>
       {(convo.unread_count ?? 0) > 0 && (
         <span className="w-4 h-4 bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center shrink-0 mt-1">
-          {convo.unread_count! > 9 ? "9+" : convo.unread_count}
+          {convo.unread_count > 9 ? "9+" : convo.unread_count}
         </span>
       )}
     </button>
@@ -302,9 +295,9 @@ function ChatHeader({ convo, productContext, isMobile, onBack, onClose }: {
   onBack: () => void;
   onClose: () => void;
 }) {
-  const name = convo?.seller_name || productContext?.sellerName || "Seller";
+  const name = convo?.other_user_name || productContext?.sellerName || "User";
+  const avatar = convo?.other_user_avatar || null;
   const productName = convo?.product_name || productContext?.productName || "";
-  const productImage = convo?.product_image || productContext?.productImage || "";
 
   return (
     <div className="h-14 flex items-center gap-2.5 px-3 border-b border-border shrink-0">
@@ -313,11 +306,16 @@ function ChatHeader({ convo, productContext, isMobile, onBack, onClose }: {
           <ArrowLeft size={16} />
         </button>
       )}
-      {productImage && (
-        <div className="w-8 h-8 rounded-lg overflow-hidden bg-muted shrink-0">
-          <img src={productImage} alt="" className="w-full h-full object-cover" />
-        </div>
-      )}
+      {/* User avatar (not product image) */}
+      <div className="w-8 h-8 rounded-full overflow-hidden bg-muted shrink-0">
+        {avatar ? (
+          <img src={avatar} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+            {name[0]?.toUpperCase() || "?"}
+          </div>
+        )}
+      </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-foreground truncate">{name}</p>
         {productName && <p className="text-[10px] text-primary truncate">{productName}</p>}
@@ -331,7 +329,7 @@ function ChatHeader({ convo, productContext, isMobile, onBack, onClose }: {
   );
 }
 
-function MessageBubble({ msg, isOwn }: { msg: import("@/hooks/useChat").Message; isOwn: boolean }) {
+function MessageBubble({ msg, isOwn }: { msg: Message; isOwn: boolean }) {
   const time = format(new Date(msg.created_at), "HH:mm");
 
   return (
