@@ -33,6 +33,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   const searchRef = useRef<HTMLDivElement>(null);
   const { data: dbListings } = useListings();
+  const { count: cartCount } = useCart();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
