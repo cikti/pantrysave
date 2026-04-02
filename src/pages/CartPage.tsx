@@ -12,6 +12,9 @@ const CartPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [deliveryChoice, setDeliveryChoice] = useState<"pickup" | "grab" | "lalamove" | null>(null);
+  const [orderComplete, setOrderComplete] = useState(false);
 
   if (!user) {
     return (
