@@ -34,7 +34,9 @@ export type CreateListingInput = {
   longitude?: number;
   address?: string;
   delivery_type: "pickup" | "third_party";
+  delivery_service?: string;
   reason?: string;
+  expiry_days?: number;
 };
 
 export function useListings() {

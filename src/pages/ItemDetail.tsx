@@ -57,7 +57,9 @@ const ItemDetail = () => {
         badgeType: "overstock" as const,
         reason: dbItem.reason || "Discounted item",
         deliveryType: dbItem.delivery_type,
+        deliveryService: (dbItem as any).delivery_service || null,
         address: dbItem.address,
+        expiryDays: (dbItem as any).expiry_days || null,
       }
     : null;
 
