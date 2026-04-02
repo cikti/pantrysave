@@ -83,6 +83,8 @@ const CartPage = () => {
     setShowFPX(true);
   };
 
+  const [showPointsFloat, setShowPointsFloat] = useState<number | null>(null);
+
   const handlePaymentSuccess = async (_paymentUrl: string) => {
     setShowFPX(false);
     for (const item of selectedItems) {
@@ -90,6 +92,12 @@ const CartPage = () => {
         await updateListingStatus.mutateAsync({ id: item.listing_id, status: "sold" });
       }
     }
+    // Earn points: 1 point per RM1 spent (rounded)
+    const pointsEarned = Math.max(1, Math.round(selectedTotal));
+    try {
+      await earnPoints.mutateAsync({ amount: pointsEarned, description: `Purchase of ${selectedCount} item${selectedCount > 1 ? "s" : ""}` });
+      setShowPointsFloat(pointsEarned);
+    } catch {}
     // Remove only selected items from cart
     for (const item of selectedItems) {
       await removeFromCart(item.listing_id);
@@ -97,7 +105,7 @@ const CartPage = () => {
     setSelectedIds(new Set());
     setOrderComplete(true);
     toast.success("Payment successful! 🌿 Nice save for the planet!");
-    setTimeout(() => { setOrderComplete(false); navigate("/"); }, 2000);
+    setTimeout(() => { setOrderComplete(false); setShowPointsFloat(null); navigate("/"); }, 2500);
   };
 
   const handlePaymentError = (error: string) => {
