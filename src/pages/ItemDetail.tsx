@@ -109,7 +109,7 @@ const ItemDetail = () => {
     const weightLabel = isWeightBased ? `${weightAmt} ${weightUnit}` : item.weight;
 
     if (isDbListing && dbId) {
-      await addToCart(dbId, cartQty, undefined);
+      await addToCart(dbId, cartQty, undefined, isWeightBased ? undefined : maxAmount);
     } else if (mockItem && id) {
       await addToCart(id, cartQty, {
         name: item.name,
@@ -117,7 +117,7 @@ const ItemDetail = () => {
         discount_price: isWeightBased ? subtotal : item.discountPrice,
         original_price: item.originalPrice,
         weight: weightLabel || item.weight,
-      });
+      }, isWeightBased ? undefined : maxAmount);
     }
     setReserved(true);
     setShowFloat(true);
