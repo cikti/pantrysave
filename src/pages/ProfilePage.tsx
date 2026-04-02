@@ -1,4 +1,7 @@
-import { Leaf, Wallet, ShoppingBag, TrendingUp } from "lucide-react";
+import { Leaf, Wallet, ShoppingBag, TrendingUp, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const stats = [
   {
@@ -28,15 +31,32 @@ const stats = [
 ];
 
 const ProfilePage = () => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("Logged out successfully");
+    navigate("/login");
+  };
+
   return (
     <div className="min-h-screen pb-24 animate-fade-in">
-      <header className="px-5 pt-8 pb-4">
-        <h1 className="text-lg font-bold text-foreground">
-          Community Impact
-        </h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          Your contribution to reducing food waste
-        </p>
+      <header className="px-5 pt-8 pb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-bold text-foreground">
+            Community Impact
+          </h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            Your contribution to reducing food waste
+          </p>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="w-9 h-9 rounded-full bg-card flex items-center justify-center shadow-sm"
+        >
+          <LogOut size={16} className="text-muted-foreground" />
+        </button>
       </header>
 
       {/* Avatar area */}
@@ -45,10 +65,10 @@ const ProfilePage = () => {
           <Leaf size={32} className="text-primary" />
         </div>
         <h2 className="text-base font-semibold text-foreground mt-3">
-          Pantry Hero
+          {user?.user_metadata?.name || "Pantry Hero"}
         </h2>
         <p className="text-xs text-muted-foreground">
-          Member since March 2026
+          {user?.email}
         </p>
       </div>
 
