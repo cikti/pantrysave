@@ -7,7 +7,6 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import { useListings } from "@/hooks/useListings";
 import { useCart } from "@/contexts/CartContext";
-import { useReservations } from "@/hooks/useReservations";
 
 const badgeColors: Record<string, string> = {
   expiry: "bg-[hsl(var(--badge-expiry))] text-primary-foreground",
