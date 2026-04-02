@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft } from "lucide-react";
+import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, ExternalLink, Check } from "lucide-react";
 import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
