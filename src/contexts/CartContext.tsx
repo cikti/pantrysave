@@ -79,7 +79,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const items = [...dbItems, ...mockItems];
 
-  const addToCart = async (listingId: string, quantity = 1, mockData?: CartItem["listing"]) => {
+  const addToCart = async (listingId: string, quantity = 1, mockData?: CartItem["listing"], maxQuantity?: number) => {
     // Mock item (not in DB)
     if (mockData) {
       setMockItems((prev) => {
@@ -88,7 +88,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         if (existing) {
           updated = prev.map((i) => i.listing_id === listingId ? { ...i, quantity: i.quantity + quantity } : i);
         } else {
-          updated = [...prev, { id: `mock-${listingId}`, listing_id: listingId, quantity, isMock: true, listing: mockData }];
+          updated = [...prev, { id: `mock-${listingId}`, listing_id: listingId, quantity, isMock: true, listing: mockData, maxQuantity }];
         }
         saveMockCart(updated);
         return updated;
