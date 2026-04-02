@@ -13,7 +13,7 @@ import MapPage from "./pages/MapPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import NotFound from "./pages/NotFound";
-import BottomNav from "./components/BottomNav";
+import AppLayout from "./components/AppLayout";
 
 const queryClient = new QueryClient();
 
@@ -24,7 +24,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <div className="max-w-lg mx-auto relative">
+          <AppLayout>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/item/:id" element={<ItemDetail />} />
@@ -49,8 +49,7 @@ const App = () => (
               <Route path="/map" element={<MapPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-            <BottomNav />
-          </div>
+          </AppLayout>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
