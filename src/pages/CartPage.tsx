@@ -106,23 +106,11 @@ const CartPage = () => {
                       <span className="text-xs text-muted-foreground line-through">RM{item.listing.original_price.toFixed(2)}</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <button onClick={() => handleDecrease(item)} className="w-7 h-7 rounded-full bg-muted flex items-center justify-center active:scale-90 transition-transform">
-                      <Minus size={14} />
-                    </button>
-                    <span className="text-sm font-semibold w-6 text-center">{item.quantity}</span>
-                    <button
-                      onClick={() => handleIncrease(item)}
-                      className={`w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform ${
-                        item.maxQuantity && item.quantity >= item.maxQuantity ? "bg-muted/50 text-muted-foreground/40" : "bg-muted"
-                      }`}
-                    >
-                      <Plus size={14} />
-                    </button>
-                    {item.maxQuantity && (
-                      <span className="text-[10px] text-muted-foreground">max {item.maxQuantity}</span>
-                    )}
-                    <button onClick={() => setConfirmRemove(item.listing_id)} className="ml-auto p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs text-muted-foreground">
+                      Qty: {item.quantity}{item.listing?.weight ? ` · ${item.listing.weight}` : ""}
+                    </span>
+                    <button onClick={() => setConfirmRemove(item.listing_id)} className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
                       <Trash2 size={14} />
                     </button>
                   </div>
