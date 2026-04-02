@@ -85,7 +85,6 @@ const CartPage = () => {
     setShowFPX(true);
   };
 
-  const [showPointsFloat, setShowPointsFloat] = useState<number | null>(null);
 
   const handlePaymentSuccess = async (_paymentUrl: string) => {
     setShowFPX(false);
