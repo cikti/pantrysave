@@ -20,6 +20,8 @@ const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { openChat } = useChat();
+  const { user } = useAuth();
   const [reserved, setReserved] = useState(false);
   const [showFloat, setShowFloat] = useState(false);
   const [qty, setQty] = useState(1);
