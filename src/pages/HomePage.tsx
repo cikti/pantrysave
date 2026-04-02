@@ -62,7 +62,7 @@ const HomePage = () => {
     return (dbListings || []).map((l) => ({
       id: `db-${l.id}`,
       name: l.name,
-      seller: l.address || "Local seller",
+      seller: l.seller_name || l.address || "Local seller",
       image: l.image_url || "",
       category: l.category || "Fresh Produce",
       weight: l.weight || "",
