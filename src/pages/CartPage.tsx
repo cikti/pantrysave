@@ -107,11 +107,6 @@ const CartPage = () => {
   };
 
   const handlePaymentError = (error: string) => {
-    selectedItems.forEach((item) => {
-      if (!item.isMock) {
-        updateListingStatus.mutate({ id: item.listing_id, status: "available" });
-      }
-    });
     toast.error(error);
   };
 
