@@ -1,4 +1,4 @@
-import { ShoppingBag, MapPin, PlusCircle, ShoppingCart, Package, MessageCircle } from "lucide-react";
+import { ShoppingBag, MapPin, PlusCircle, ShoppingCart, Package, MessageCircle, Coins } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useChat } from "@/contexts/ChatContext";
