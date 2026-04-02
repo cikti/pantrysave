@@ -99,7 +99,17 @@ const HomePage = () => {
                   <MapPin size={12} /><span>Taman Melawati</span>
                 </button>
               </div>
-              <UserAvatar size="sm" />
+              <div className="flex items-center gap-3">
+                <button onClick={() => navigate("/cart")} className="relative w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted active:scale-90 transition-transform">
+                  <ShoppingCart size={18} className="text-foreground" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {cartCount > 9 ? "9+" : cartCount}
+                    </span>
+                  )}
+                </button>
+                <UserAvatar size="sm" />
+              </div>
             </div>
           </header>
         )}
