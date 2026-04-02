@@ -13,6 +13,7 @@ import CartPage from "./pages/CartPage";
 import ReservedPage from "./pages/ReservedPage";
 import SellPage from "./pages/SellPage";
 import ProfilePage from "./pages/ProfilePage";
+import PointsPage from "./pages/PointsPage";
 import MapPage from "./pages/MapPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
