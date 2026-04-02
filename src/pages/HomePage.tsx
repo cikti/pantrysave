@@ -3,6 +3,7 @@ import { MapPin, Search } from "lucide-react";
 import { categories, groceryItems } from "@/data/mockData";
 import GroceryCard from "@/components/GroceryCard";
 import PageTransition from "@/components/PageTransition";
+import UserAvatar from "@/components/UserAvatar";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const HomePage = () => {
