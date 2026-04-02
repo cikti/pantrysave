@@ -3,7 +3,7 @@ import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info, Square, Ch
 import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useUpdateListingStatus, usePurchaseListing } from "@/hooks/useListings";
+import { usePurchaseListing } from "@/hooks/useListings";
 import { usePoints } from "@/hooks/usePoints";
 import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
@@ -20,7 +20,6 @@ const CartPage = () => {
   const { items, count, total, loading, removeFromCart, updateQuantity, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const updateListingStatus = useUpdateListingStatus();
   const purchaseListing = usePurchaseListing();
   const { earnPoints } = usePoints();
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
@@ -77,12 +76,6 @@ const CartPage = () => {
 
   const handleConfirmOrder = () => {
     if (!deliveryChoice) { toast.error("Please select a delivery option"); return; }
-    // Reserve items during checkout
-    selectedItems.forEach((item) => {
-      if (!item.isMock) {
-        updateListingStatus.mutate({ id: item.listing_id, status: "reserved" });
-      }
-    });
     setShowCheckout(false);
     setShowFPX(true);
   };
@@ -113,11 +106,6 @@ const CartPage = () => {
   };
 
   const handlePaymentError = (error: string) => {
-    selectedItems.forEach((item) => {
-      if (!item.isMock) {
-        updateListingStatus.mutate({ id: item.listing_id, status: "available" });
-      }
-    });
     toast.error(error);
   };
 
@@ -439,11 +427,6 @@ const CartPage = () => {
           orderId={`PS-${Date.now().toString(36).toUpperCase()}`}
           onClose={() => {
             setShowFPX(false);
-            selectedItems.forEach((item) => {
-              if (!item.isMock) {
-                updateListingStatus.mutate({ id: item.listing_id, status: "available" });
-              }
-            });
           }}
           onSuccess={handlePaymentSuccess}
           onError={handlePaymentError}
