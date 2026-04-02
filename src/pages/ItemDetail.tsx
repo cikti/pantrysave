@@ -34,8 +34,13 @@ const ItemDetail = () => {
 
   const isDbListing = id?.startsWith("db-");
   const dbId = isDbListing ? id.replace("db-", "") : null;
-  const dbItem = dbListings?.find((l) => l.id === dbId);
+  // Use useListingById for direct links (fetches any status), fall back to listing from useListings
+  const { data: directDbItem } = useListingById(dbId ?? undefined);
+  const dbItem = directDbItem || dbListings?.find((l) => l.id === dbId);
   const mockItem = !isDbListing ? groceryItems.find((i) => i.id === id) : null;
+
+  const isSold = dbItem?.status === "sold";
+  const stockLeft = dbItem?.stock_quantity ?? null;
 
   // Normalize item data
   const item = mockItem
@@ -53,7 +58,6 @@ const ItemDetail = () => {
         deliveryService: null as string | null,
         address: null as string | null,
         expiryDays: null as number | null,
-        // Mock items are treated as fixed pricing
         pricingType: "fixed" as string,
         pricePerUnit: null as number | null,
         unitType: "quantity" as string,
@@ -67,8 +71,8 @@ const ItemDetail = () => {
         weight: dbItem.weight || "",
         originalPrice: Number(dbItem.original_price),
         discountPrice: Number(dbItem.discount_price),
-        badge: dbItem.condition || "Discounted",
-        badgeType: "overstock" as const,
+        badge: isSold ? "SOLD" : (dbItem.condition || "Discounted"),
+        badgeType: isSold ? "sold" as const : "overstock" as const,
         reason: dbItem.reason || "Discounted item",
         deliveryType: dbItem.delivery_type,
         deliveryService: dbItem.delivery_service || null,
@@ -77,7 +81,7 @@ const ItemDetail = () => {
         pricingType: dbItem.pricing_type || "fixed",
         pricePerUnit: dbItem.price_per_unit ? Number(dbItem.price_per_unit) : null,
         unitType: dbItem.unit_type || "quantity",
-        maxQuantity: dbItem.max_quantity ? Number(dbItem.max_quantity) : null,
+        maxQuantity: stockLeft !== null ? stockLeft : (dbItem.max_quantity ? Number(dbItem.max_quantity) : null),
       }
     : null;
 
