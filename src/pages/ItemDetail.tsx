@@ -244,8 +244,12 @@ const ItemDetail = () => {
                       {weightUnit === "kg" ? weightAmt.toFixed(2) : weightAmt} {weightUnit}
                     </span>
                     <button
-                      onClick={() => setWeightAmt((v) => weightUnit === "kg" ? +(v + 0.25).toFixed(2) : v + 50)}
-                      className="w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm"
+                      onClick={() => setWeightAmt((v) => {
+                        const next = weightUnit === "kg" ? +(v + 0.25).toFixed(2) : v + 50;
+                        if (maxAmount && next > maxAmount) { toast.error(`Max available: ${maxAmount} ${weightUnit}`); return v; }
+                        return next;
+                      })}
+                      className={`w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm ${maxAmount && weightAmt >= maxAmount ? "opacity-40" : ""}`}
                     >
                       <Plus size={14} />
                     </button>
