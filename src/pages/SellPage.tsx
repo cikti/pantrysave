@@ -316,7 +316,7 @@ const SellPage = () => {
 
           <motion.button
             type="submit"
-            disabled={submitting || !form.name || !form.originalPrice || !form.discountPrice}
+            disabled={submitting || !form.name || !form.originalPrice || (form.pricingType === "fixed" ? !form.discountPrice : !form.pricePerUnit)}
             whileTap={{ scale: 0.96 }}
             className="w-full bg-primary text-primary-foreground font-semibold py-4 rounded-2xl shadow-lg transition-transform disabled:opacity-50"
           >
