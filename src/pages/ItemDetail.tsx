@@ -80,9 +80,21 @@ const ItemDetail = () => {
 
   const handleReserve = async () => {
     if (reserved) return;
-    // Add DB listings to cart
+    // Add DB listings to cart and create reservation
     if (isDbListing && dbId) {
       await addToCart(dbId);
+      try {
+        await createReservation({
+          listing_id: dbId,
+          delivery_type: item.deliveryType || undefined,
+          delivery_service: (item as any).deliveryService || undefined,
+          address: item.address || undefined,
+          latitude: dbItem?.latitude || undefined,
+          longitude: dbItem?.longitude || undefined,
+        });
+      } catch {
+        // Duplicate reservation is fine
+      }
     }
     setReserved(true);
     setShowFloat(true);
