@@ -267,8 +267,12 @@ const ItemDetail = () => {
                     </button>
                     <span className="text-sm font-bold text-foreground w-8 text-center">{qty}</span>
                     <button
-                      onClick={() => setQty((v) => v + 1)}
-                      className="w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm"
+                      onClick={() => setQty((v) => {
+                        const next = v + 1;
+                        if (maxAmount && next > maxAmount) { toast.error(`Max available: ${maxAmount}`); return v; }
+                        return next;
+                      })}
+                      className={`w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm ${maxAmount && qty >= maxAmount ? "opacity-40" : ""}`}
                     >
                       <Plus size={14} />
                     </button>
