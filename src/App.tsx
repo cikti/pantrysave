@@ -4,9 +4,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CartProvider } from "@/contexts/CartContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import ItemDetail from "./pages/ItemDetail";
+import CartPage from "./pages/CartPage";
 import SellPage from "./pages/SellPage";
 import ProfilePage from "./pages/ProfilePage";
 import MapPage from "./pages/MapPage";
@@ -24,10 +26,12 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <CartProvider>
           <AppLayout>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/item/:id" element={<ItemDetail />} />
+              <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route
@@ -50,6 +54,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AppLayout>
+          </CartProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

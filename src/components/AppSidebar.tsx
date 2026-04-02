@@ -1,4 +1,4 @@
-import { ShoppingBag, MapPin, PlusCircle } from "lucide-react";
+import { ShoppingBag, MapPin, PlusCircle, ShoppingCart } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -17,6 +17,7 @@ const navItems = [
   { title: "Shop", url: "/", icon: ShoppingBag },
   { title: "Map View", url: "/map", icon: MapPin },
   { title: "Sell / List", url: "/sell", icon: PlusCircle },
+  { title: "Cart", url: "/cart", icon: ShoppingCart },
 ];
 
 export function AppSidebar() {
