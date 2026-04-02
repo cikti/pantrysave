@@ -82,8 +82,19 @@ const SellPage = () => {
         }
       }
 
+      // Fetch seller name from profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("id", user.id)
+        .single();
+      const sellerName = profile?.name || user.email?.split("@")[0] || "Seller";
+
       const deliveryType = form.deliveryType === "pickup" ? "pickup" : "third_party";
       const deliveryService = form.deliveryType !== "pickup" ? form.deliveryType : undefined;
+
+      // Set delivery fee for third-party
+      const deliveryFee = form.deliveryType === "grab" ? 8 : form.deliveryType === "lalamove" ? 6 : 0;
 
       // Build weight string for display
       const weightStr = form.pricingType === "fixed"
@@ -113,6 +124,8 @@ const SellPage = () => {
         address: form.address || undefined,
         delivery_type: deliveryType as "pickup" | "third_party",
         delivery_service: deliveryService,
+        delivery_fee: deliveryFee,
+        seller_name: sellerName,
         reason: form.reason || `${form.condition || "Discounted"} — perfectly good to use.`,
         expiry_days: form.condition === "Near Expiry" ? form.expiryDays : undefined,
         pricing_type: form.pricingType,

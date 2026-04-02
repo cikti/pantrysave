@@ -1,6 +1,7 @@
 import { type GroceryItem } from "@/data/mockData";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Store } from "lucide-react";
 
 const badgeColors: Record<string, string> = {
   expiry: "bg-[hsl(var(--badge-expiry))] text-primary-foreground",
@@ -40,7 +41,10 @@ const GroceryCard = ({ item, index = 0 }: { item: GroceryItem; index?: number })
         </span>
       </div>
       <div className="p-3 flex flex-col gap-1">
-        <p className="text-xs text-muted-foreground">{item.seller}</p>
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <Store size={10} className="shrink-0" />
+          <p className="text-[11px] font-medium truncate">{item.seller}</p>
+        </div>
         <h3 className="text-sm font-semibold text-foreground leading-tight">
           {item.name}
         </h3>

@@ -17,6 +17,8 @@ export type Listing = {
   address: string | null;
   delivery_type: "pickup" | "third_party";
   delivery_service: string | null;
+  delivery_fee: number | null;
+  seller_name: string | null;
   status: "available" | "reserved" | "sold";
   reason: string | null;
   expiry_days: number | null;
@@ -41,6 +43,8 @@ export type CreateListingInput = {
   address?: string;
   delivery_type: "pickup" | "third_party";
   delivery_service?: string;
+  delivery_fee?: number;
+  seller_name?: string;
   reason?: string;
   expiry_days?: number;
   pricing_type?: string;

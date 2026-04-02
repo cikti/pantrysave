@@ -62,7 +62,7 @@ const ItemDetail = () => {
     : dbItem
     ? {
         name: dbItem.name,
-        seller: dbItem.address || "Local seller",
+        seller: dbItem.seller_name || dbItem.address || "Local seller",
         image: dbItem.image_url || "",
         weight: dbItem.weight || "",
         originalPrice: Number(dbItem.original_price),
