@@ -343,7 +343,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      purchase_listing: {
+        Args: { p_listing_id: string; p_quantity: number }
+        Returns: Json
+      }
     }
     Enums: {
       delivery_type: "pickup" | "third_party"
