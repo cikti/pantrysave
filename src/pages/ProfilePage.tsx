@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Leaf, Wallet, ShoppingBag, TrendingUp, LogOut, Award, Camera, User } from "lucide-react";
+import { Leaf, Wallet, ShoppingBag, TrendingUp, LogOut, Award, Camera, User, Package } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
