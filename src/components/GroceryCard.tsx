@@ -53,7 +53,7 @@ const GroceryCard = ({ item, index = 0 }: { item: GroceryItem; index?: number })
             RM{item.clearancePrice.toFixed(2)}
           </span>
         </div>
-        <span className="text-[10px] font-medium text-primary bg-accent rounded-full px-2 py-0.5 w-fit mt-0.5">
+        <span className="text-[10px] font-medium bg-accent rounded-full px-2 py-0.5 w-fit mt-0.5 text-[#288157]">
           Save RM{saving}
         </span>
       </div>
