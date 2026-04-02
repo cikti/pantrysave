@@ -1,19 +1,26 @@
 import { type GroceryItem } from "@/data/mockData";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const badgeColors: Record<string, string> = {
-  expiry: "bg-[hsl(25,90%,52%)] text-primary-foreground",
+  expiry: "bg-[hsl(var(--badge-expiry))] text-primary-foreground",
   imperfect: "bg-primary text-primary-foreground",
-  overstock: "bg-[hsl(210,60%,50%)] text-primary-foreground",
+  overstock: "bg-[hsl(var(--badge-overstock))] text-primary-foreground",
 };
 
-const GroceryCard = ({ item }: { item: GroceryItem }) => {
+const GroceryCard = ({ item, index = 0 }: { item: GroceryItem; index?: number }) => {
   const navigate = useNavigate();
+  const saving = (item.originalPrice - item.clearancePrice).toFixed(2);
 
   return (
-    <button
+    <motion.button
       onClick={() => navigate(`/item/${item.id}`)}
-      className="flex flex-col bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow text-left animate-fade-in"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.06, ease: "easeOut" }}
+      whileTap={{ scale: 0.97 }}
+      whileHover={{ y: -4, boxShadow: "0 8px 24px -8px hsl(var(--primary) / 0.15)" }}
+      className="flex flex-col bg-card rounded-2xl overflow-hidden shadow-sm text-left tap-highlight"
     >
       <div className="relative aspect-square overflow-hidden">
         <img
@@ -22,10 +29,12 @@ const GroceryCard = ({ item }: { item: GroceryItem }) => {
           loading="lazy"
           width={320}
           height={320}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
         />
         <span
-          className={`absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full ${badgeColors[item.badgeType]}`}
+          className={`absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full ${badgeColors[item.badgeType]} ${
+            item.badgeType === "expiry" ? "animate-pulse-badge" : ""
+          }`}
         >
           {item.badge}
         </span>
@@ -44,8 +53,11 @@ const GroceryCard = ({ item }: { item: GroceryItem }) => {
             RM{item.clearancePrice.toFixed(2)}
           </span>
         </div>
+        <span className="text-[10px] font-medium text-primary bg-accent rounded-full px-2 py-0.5 w-fit mt-0.5">
+          Save RM{saving}
+        </span>
       </div>
-    </button>
+    </motion.button>
   );
 };
 
