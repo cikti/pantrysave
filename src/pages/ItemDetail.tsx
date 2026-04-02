@@ -14,6 +14,7 @@ const badgeColors: Record<string, string> = {
   expiry: "bg-[hsl(var(--badge-expiry))] text-primary-foreground",
   imperfect: "bg-primary text-primary-foreground",
   overstock: "bg-[hsl(var(--badge-overstock))] text-primary-foreground",
+  sold: "bg-destructive text-destructive-foreground",
 };
 
 const ItemDetail = () => {
