@@ -13,6 +13,7 @@ const tabs = [
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { count: cartCount } = useCart();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-warm-white/95 border-t border-border backdrop-blur-lg">
