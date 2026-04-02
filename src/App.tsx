@@ -29,6 +29,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <CartProvider>
+          <ChatProvider>
           <AppLayout>
             <Routes>
               <Route path="/" element={<Index />} />
