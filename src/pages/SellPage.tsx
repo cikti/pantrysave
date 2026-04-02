@@ -1,16 +1,18 @@
 import { useState } from "react";
-import { ArrowLeft, Camera, ImagePlus, Truck, MapPin } from "lucide-react";
+import { ArrowLeft, Camera, ImagePlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { categories } from "@/data/mockData";
 import { motion } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import LocationPicker from "@/components/LocationPicker";
+import QuantityWeightInput from "@/components/sell/QuantityWeightInput";
+import ConditionInput from "@/components/sell/ConditionInput";
+import DeliveryInput, { type DeliveryOption } from "@/components/sell/DeliveryInput";
 import { useCreateListing } from "@/hooks/useListings";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
-const conditions = ["Near Expiry", "Overstock", "Imperfect Look"];
 const steps = ["Photo", "Details", "Location", "Pricing"];
 
 const SellPage = () => {
@@ -26,9 +28,10 @@ const SellPage = () => {
     category: "",
     weight: "",
     condition: "",
+    expiryDays: 3,
     originalPrice: "",
     discountPrice: "",
-    deliveryType: "pickup" as "pickup" | "third_party",
+    deliveryType: "pickup" as DeliveryOption,
     latitude: null as number | null,
     longitude: null as number | null,
     address: "",
@@ -59,7 +62,6 @@ const SellPage = () => {
     try {
       let image_url: string | undefined;
 
-      // Upload image if provided
       if (imageFile) {
         const ext = imageFile.name.split(".").pop();
         const path = `${user.id}/${Date.now()}.${ext}`;
@@ -74,6 +76,9 @@ const SellPage = () => {
         }
       }
 
+      const deliveryType = form.deliveryType === "pickup" ? "pickup" : "third_party";
+      const deliveryService = form.deliveryType !== "pickup" ? form.deliveryType : undefined;
+
       await createListing.mutateAsync({
         name: form.name,
         category: form.category || undefined,
@@ -85,8 +90,10 @@ const SellPage = () => {
         latitude: form.latitude ?? undefined,
         longitude: form.longitude ?? undefined,
         address: form.address || undefined,
-        delivery_type: form.deliveryType,
+        delivery_type: deliveryType as "pickup" | "third_party",
+        delivery_service: deliveryService,
         reason: form.reason || `${form.condition || "Discounted"} — perfectly good to use.`,
+        expiry_days: form.condition === "Near Expiry" ? form.expiryDays : undefined,
       });
 
       toast.success("You rescued this item! 🌿", {
@@ -194,26 +201,19 @@ const SellPage = () => {
             </select>
           </div>
 
-          <InputField
-            label="Quantity / Weight"
+          {/* Quantity / Weight */}
+          <QuantityWeightInput
             value={form.weight}
             onChange={(v) => update("weight", v)}
-            placeholder="e.g. 1kg, Bundle, 3 pcs"
           />
 
-          <div>
-            <label className="text-xs font-medium text-foreground mb-1.5 block">Condition</label>
-            <select
-              value={form.condition}
-              onChange={(e) => update("condition", e.target.value)}
-              className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
-            >
-              <option value="">Select condition</option>
-              {conditions.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </div>
+          {/* Condition */}
+          <ConditionInput
+            condition={form.condition}
+            expiryDays={form.expiryDays}
+            onConditionChange={(v) => update("condition", v)}
+            onExpiryDaysChange={(v) => update("expiryDays", v)}
+          />
 
           <InputField
             label="Why it's discounted"
@@ -235,33 +235,10 @@ const SellPage = () => {
           />
 
           {/* Delivery type */}
-          <div>
-            <label className="text-xs font-medium text-foreground mb-2 block">Delivery Option</label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => update("deliveryType", "pickup")}
-                className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-3 text-xs font-medium transition-all active:scale-95 ${
-                  form.deliveryType === "pickup"
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-foreground"
-                }`}
-              >
-                <MapPin size={14} /> Self Pickup
-              </button>
-              <button
-                type="button"
-                onClick={() => update("deliveryType", "third_party")}
-                className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-3 text-xs font-medium transition-all active:scale-95 ${
-                  form.deliveryType === "third_party"
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-foreground"
-                }`}
-              >
-                <Truck size={14} /> Third-party Delivery
-              </button>
-            </div>
-          </div>
+          <DeliveryInput
+            value={form.deliveryType}
+            onChange={(v) => update("deliveryType", v)}
+          />
 
           <div className="grid grid-cols-2 gap-3">
             <InputField

@@ -57,7 +57,9 @@ const ItemDetail = () => {
         badgeType: "overstock" as const,
         reason: dbItem.reason || "Discounted item",
         deliveryType: dbItem.delivery_type,
+        deliveryService: (dbItem as any).delivery_service || null,
         address: dbItem.address,
+        expiryDays: (dbItem as any).expiry_days || null,
       }
     : null;
 
@@ -147,9 +149,21 @@ const ItemDetail = () => {
               ) : (
                 <>
                   <Truck size={14} className="text-primary" />
-                  <span>Third-party Delivery (Grab / Lalamove)</span>
+                  <span>
+                    {item.deliveryService
+                      ? `${item.deliveryService.charAt(0).toUpperCase() + item.deliveryService.slice(1)} Delivery`
+                      : "Third-party Delivery"}
+                  </span>
                 </>
               )}
+            </motion.div>
+          )}
+
+          {/* Expiry info */}
+          {item.expiryDays && (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.39 }} className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="inline-block w-2 h-2 rounded-full bg-amber-400" />
+              Expires in ~{item.expiryDays} day{item.expiryDays > 1 ? "s" : ""}
             </motion.div>
           )}
 
