@@ -273,6 +273,33 @@ const ItemDetail = () => {
               <p className="text-xs text-muted-foreground mt-1">{item.reason}</p>
             </div>
           </motion.div>
+
+          {/* Chat with Seller button */}
+          <motion.button
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              if (!user) {
+                toast.error("Please log in to chat with the seller");
+                navigate("/login");
+                return;
+              }
+              const sellerId = dbItem?.user_id || "mock-seller";
+              openChat(undefined, {
+                productId: id || "",
+                productName: item.name,
+                productImage: item.image,
+                sellerId,
+                sellerName: item.seller,
+              });
+            }}
+            className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-card border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors"
+          >
+            <MessageCircle size={16} className="text-primary" />
+            Chat with Seller
+          </motion.button>
         </div>
 
         {showFloat && (
