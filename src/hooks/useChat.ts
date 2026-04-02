@@ -12,8 +12,10 @@ export type Conversation = {
   last_message: string | null;
   last_message_time: string | null;
   created_at: string;
-  seller_name?: string;
-  unread_count?: number;
+  // Enriched fields — always refer to the OTHER person
+  other_user_name: string;
+  other_user_avatar: string | null;
+  unread_count: number;
 };
 
 export type Message = {
@@ -40,9 +42,9 @@ export function useConversations() {
       .order("last_message_time", { ascending: false });
 
     if (data) {
-      // Fetch unread counts and seller names
       const enriched = await Promise.all(
         data.map(async (c: any) => {
+          // Count unread messages (messages not sent by me that are unread)
           const { count } = await supabase
             .from("messages")
             .select("*", { count: "exact", head: true })
@@ -50,17 +52,21 @@ export function useConversations() {
             .eq("is_read", false)
             .neq("sender_id", user.id);
 
-          // Get seller profile name
+          // Determine the OTHER person's ID
+          const otherUserId = c.buyer_id === user.id ? c.seller_id : c.buyer_id;
+
+          // Fetch the other person's profile (name + avatar)
           const { data: profile } = await supabase
             .from("profiles")
-            .select("name")
-            .eq("id", c.seller_id)
+            .select("name, avatar_url")
+            .eq("id", otherUserId)
             .single();
 
           return {
             ...c,
             unread_count: count || 0,
-            seller_name: profile?.name || "Seller",
+            other_user_name: profile?.name || "User",
+            other_user_avatar: profile?.avatar_url || null,
           } as Conversation;
         })
       );
@@ -133,7 +139,6 @@ export function useMessages(conversationId: string | null) {
         filter: `conversation_id=eq.${conversationId}`,
       }, (payload) => {
         setMessages((prev) => [...prev, payload.new as Message]);
-        // Mark as read if we're the receiver
         if (user && (payload.new as Message).sender_id !== user.id) {
           supabase.from("messages").update({ is_read: true }).eq("id", (payload.new as Message).id).then(() => {});
         }
@@ -157,7 +162,6 @@ export function useSendMessage() {
       message_type: messageType,
       image_url: imageUrl || null,
     });
-    // Update conversation last message
     await supabase.from("conversations").update({
       last_message: message,
       last_message_time: new Date().toISOString(),
