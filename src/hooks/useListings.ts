@@ -127,6 +127,37 @@ export function useUpdateListingStatus() {
   });
 }
 
+export function usePurchaseListing() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
+      // Fetch current stock
+      const { data: listing, error: fetchError } = await supabase
+        .from("listings")
+        .select("stock_quantity")
+        .eq("id", id)
+        .single();
+      if (fetchError) throw fetchError;
+
+      const newStock = Math.max(0, (listing.stock_quantity ?? 1) - quantity);
+      const newStatus = newStock === 0 ? "sold" : "available";
+
+      const { error } = await supabase
+        .from("listings")
+        .update({ stock_quantity: newStock, status: newStatus as any })
+        .eq("id", id);
+      if (error) throw error;
+
+      return { newStock, newStatus };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
+      queryClient.invalidateQueries({ queryKey: ["my-listings"] });
+    },
+  });
+}
+
 export function useDeleteListing() {
   const queryClient = useQueryClient();
 
