@@ -26,6 +26,7 @@ export type Listing = {
   price_per_unit: number | null;
   unit_type: string;
   max_quantity: number | null;
+  stock_quantity: number;
   created_at: string;
   updated_at: string;
 };
