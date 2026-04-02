@@ -28,10 +28,17 @@ const CartPage = () => {
     );
   }
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
+    setShowCheckout(true);
+  };
+
+  const handleConfirmOrder = async () => {
+    if (!deliveryChoice) { toast.error("Please select a delivery option"); return; }
     await clearCart();
-    toast.success("Items reserved! 🌿 Nice save for the planet!");
-    navigate("/");
+    setShowCheckout(false);
+    setOrderComplete(true);
+    toast.success("Order placed! 🌿 Nice save for the planet!");
+    setTimeout(() => { setOrderComplete(false); navigate("/"); }, 2000);
   };
 
   const handleDecrease = (item: CartItem) => {
