@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
+import FPXPaymentModal from "@/components/FPXPaymentModal";
 
 const CartPage = () => {
   const { items, count, total, loading, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -15,6 +16,7 @@ const CartPage = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [deliveryChoice, setDeliveryChoice] = useState<"pickup" | "grab" | "lalamove" | null>(null);
   const [orderComplete, setOrderComplete] = useState(false);
+  const [showFPX, setShowFPX] = useState(false);
 
   if (!user) {
     return (
@@ -32,13 +34,22 @@ const CartPage = () => {
     setShowCheckout(true);
   };
 
-  const handleConfirmOrder = async () => {
+  const handleConfirmOrder = () => {
     if (!deliveryChoice) { toast.error("Please select a delivery option"); return; }
-    await clearCart();
     setShowCheckout(false);
+    setShowFPX(true);
+  };
+
+  const handlePaymentSuccess = async (_paymentUrl: string) => {
+    setShowFPX(false);
+    await clearCart();
     setOrderComplete(true);
-    toast.success("Order placed! 🌿 Nice save for the planet!");
+    toast.success("Payment successful! 🌿 Nice save for the planet!");
     setTimeout(() => { setOrderComplete(false); navigate("/"); }, 2000);
+  };
+
+  const handlePaymentError = (error: string) => {
+    toast.error(error);
   };
 
   const handleDecrease = (item: CartItem) => {
@@ -287,6 +298,16 @@ const CartPage = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* FPX Payment Modal */}
+        <FPXPaymentModal
+          open={showFPX}
+          amount={total}
+          orderId={`PS-${Date.now().toString(36).toUpperCase()}`}
+          onClose={() => setShowFPX(false)}
+          onSuccess={handlePaymentSuccess}
+          onError={handlePaymentError}
+        />
       </div>
     </PageTransition>
   );
