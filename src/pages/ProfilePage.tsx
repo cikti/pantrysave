@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
-import { Leaf, Wallet, ShoppingBag, TrendingUp, LogOut, Award, Camera, User, Package } from "lucide-react";
+import { Leaf, Wallet, ShoppingBag, TrendingUp, LogOut, Award, Camera, User, Package, Coins } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useAvatar } from "@/hooks/useAvatar";
+import { usePoints } from "@/hooks/usePoints";
 import PageTransition from "@/components/PageTransition";
 import MyListings from "@/components/MyListings";
 
