@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { X, Check, Building2, AlertCircle, Loader2, Shield, CreditCard } from "lucide-react";
+import { X, Check, AlertCircle, Loader2, Shield, CreditCard, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import MessageSellerModal from "@/components/MessageSellerModal";
+import { toast } from "sonner";
 
 const MALAYSIAN_BANKS = [
   { code: "MBB0227", name: "Maybank", short: "MBB" },
