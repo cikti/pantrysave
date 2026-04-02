@@ -11,6 +11,7 @@ import PageTransition from "@/components/PageTransition";
 const ReservedPage = () => {
   const { reservations, loading, markCollected } = useReservations();
   const { user } = useAuth();
+  const { earnPoints } = usePoints();
   const navigate = useNavigate();
   const [filter, setFilter] = useState<"all" | "reserved" | "collected">("all");
 
