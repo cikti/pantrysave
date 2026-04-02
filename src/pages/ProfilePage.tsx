@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
-import { Leaf, Wallet, ShoppingBag, TrendingUp, LogOut, Award, Camera, User, Package } from "lucide-react";
+import { Leaf, Wallet, ShoppingBag, TrendingUp, LogOut, Award, Camera, User, Package, Coins } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useAvatar } from "@/hooks/useAvatar";
+import { usePoints } from "@/hooks/usePoints";
 import PageTransition from "@/components/PageTransition";
 import MyListings from "@/components/MyListings";
 
@@ -19,6 +20,7 @@ const ProfilePage = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { avatarUrl, uploadAvatar } = useAvatar();
+  const { balance: pointsBalance } = usePoints();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<"impact" | "listings">("impact");
@@ -150,14 +152,16 @@ const ProfilePage = () => {
 
             {/* Wallet preview */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75 }} className="px-5 mt-4">
-              <div className="bg-primary/10 rounded-2xl p-4">
+              <button onClick={() => navigate("/points")} className="w-full bg-primary/10 rounded-2xl p-4 text-left active:scale-[0.98] transition-transform">
                 <div className="flex items-center gap-2 mb-2">
-                  <Award size={16} className="text-primary" />
+                  <Coins size={16} className="text-primary" />
                   <p className="text-xs font-semibold text-primary">Reward Points</p>
                 </div>
-                <p className="text-2xl font-bold text-primary">350 pts</p>
-                <p className="text-[10px] text-muted-foreground mt-1">Earn points with every rescue purchase</p>
-              </div>
+                <motion.p key={pointsBalance} initial={{ scale: 1.05 }} animate={{ scale: 1 }} className="text-2xl font-bold text-primary">
+                  {pointsBalance} pts
+                </motion.p>
+                <p className="text-[10px] text-muted-foreground mt-1">Tap to view rewards & redeem points</p>
+              </button>
             </motion.div>
           </>
         ) : (

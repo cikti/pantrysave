@@ -1,4 +1,4 @@
-import { ShoppingBag, MapPin, PlusCircle, ShoppingCart, Package, MessageCircle } from "lucide-react";
+import { ShoppingBag, MapPin, PlusCircle, ShoppingCart, Package, MessageCircle, Coins } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useChat } from "@/contexts/ChatContext";
@@ -22,6 +22,7 @@ const navItems = [
   { title: "Sell / List", url: "/sell", icon: PlusCircle },
   { title: "Cart", url: "/cart", icon: ShoppingCart },
   { title: "Reserved", url: "/reserved", icon: Package },
+  { title: "Points", url: "/points", icon: Coins },
 ];
 
 export function AppSidebar() {
