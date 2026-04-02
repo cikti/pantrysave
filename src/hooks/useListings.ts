@@ -52,6 +52,7 @@ export type CreateListingInput = {
   price_per_unit?: number;
   unit_type?: string;
   max_quantity?: number;
+  stock_quantity?: number;
 };
 
 export function useListings() {

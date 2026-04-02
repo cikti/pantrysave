@@ -132,6 +132,7 @@ const SellPage = () => {
         price_per_unit: form.pricingType === "flexible" ? parseFloat(form.pricePerUnit) : undefined,
         unit_type: form.pricingType === "flexible" ? form.unitType : "quantity",
         max_quantity: maxQty || undefined,
+        stock_quantity: maxQty ? Math.floor(maxQty) : 1,
       });
 
       toast.success("You rescued this item! 🌿", {
