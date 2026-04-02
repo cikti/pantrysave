@@ -1,12 +1,13 @@
-import { ShoppingBag, MapPin, PlusCircle, User } from "lucide-react";
+import { ShoppingBag, MapPin, PlusCircle, ShoppingCart } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useCart } from "@/contexts/CartContext";
 
 const tabs = [
   { icon: ShoppingBag, label: "Shop", path: "/" },
   { icon: MapPin, label: "Map", path: "/map" },
   { icon: PlusCircle, label: "Sell", path: "/sell" },
-  { icon: User, label: "Profile", path: "/profile" },
+  { icon: ShoppingCart, label: "Cart", path: "/cart" },
 ];
 
 const BottomNav = () => {
