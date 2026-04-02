@@ -29,6 +29,7 @@ const HomePage = () => {
   const [showRecent, setShowRecent] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>(getRecentSearches);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const searchRef = useRef<HTMLDivElement>(null);
   const { data: dbListings } = useListings();
 
