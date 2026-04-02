@@ -2,7 +2,6 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import AppHeader from "@/components/AppHeader";
 import BottomNav from "@/components/BottomNav";
-import ChatBox from "@/components/ChatBox";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
@@ -13,7 +12,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="min-h-screen max-w-lg mx-auto relative">
         {children}
         <BottomNav />
-        <ChatBox sellerName="Local Seller" />
       </div>
     );
   }
@@ -28,7 +26,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             {children}
           </main>
         </div>
-        <ChatBox sellerName="Local Seller" />
+        
       </div>
     </SidebarProvider>
   );

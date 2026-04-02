@@ -1,15 +1,13 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { MapPin, Search, X, Clock, Trash2, ShoppingCart, MessageCircle } from "lucide-react";
+import { MapPin, Search, X, Clock, Trash2, ShoppingCart } from "lucide-react";
 import { categories, groceryItems } from "@/data/mockData";
 import GroceryCard from "@/components/GroceryCard";
 import PageTransition from "@/components/PageTransition";
 import UserAvatar from "@/components/UserAvatar";
-import MessageSellerModal from "@/components/MessageSellerModal";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { useListings } from "@/hooks/useListings";
 import { useCart } from "@/contexts/CartContext";
-import { toast } from "sonner";
 import type { GroceryItem } from "@/data/mockData";
 
 const STORAGE_KEY = "pantrysave_recent_searches";
@@ -30,7 +28,7 @@ const HomePage = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [showRecent, setShowRecent] = useState(false);
-  const [showMessage, setShowMessage] = useState(false);
+  
   const [recentSearches, setRecentSearches] = useState<string[]>(getRecentSearches);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -103,9 +101,6 @@ const HomePage = () => {
                 </button>
               </div>
               <div className="flex items-center gap-3">
-                <button onClick={() => setShowMessage(true)} className="relative w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted active:scale-90 transition-transform">
-                  <MessageCircle size={18} className="text-foreground" />
-                </button>
                 <button onClick={() => navigate("/cart")} className="relative w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted active:scale-90 transition-transform">
                   <ShoppingCart size={18} className="text-foreground" />
                   {cartCount > 0 && (
@@ -119,11 +114,6 @@ const HomePage = () => {
             </div>
           </header>
         )}
-        <MessageSellerModal
-          open={showMessage}
-          onClose={() => setShowMessage(false)}
-          onMessageSent={() => toast.success("Message sent to seller! ✉️")}
-        />
 
         <div className="px-4 md:px-6 pt-3 pb-1" ref={searchRef}>
           <div className="relative">
