@@ -37,6 +37,8 @@ const HomePage = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const { data: dbListings } = useListings();
   const { count: cartCount } = useCart();
+  const { openChat } = useChat();
+  const unreadCount = useTotalUnread();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
