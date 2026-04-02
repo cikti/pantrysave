@@ -70,12 +70,22 @@ const ItemDetail = () => {
   // Detect if listing is weight-based or quantity-based
   const isWeightBased = useMemo(() => {
     const w = ((item?.weight) || "").toLowerCase();
-    return /\d+\s*(kg|g)\b/.test(w);
+    return /\d+(\.\d+)?\s*(kg|g)\b/.test(w);
   }, [item?.weight]);
 
   const weightUnit = useMemo(() => {
     const w = ((item?.weight) || "").toLowerCase();
     return w.includes("kg") ? "kg" : "g";
+  }, [item?.weight]);
+
+  // Parse max from weight string (e.g. "1kg" → 1, "500g" → 500, "6 pcs" → 6)
+  const maxAmount = useMemo(() => {
+    const w = ((item?.weight) || "").toLowerCase();
+    const weightMatch = w.match(/([\d.]+)\s*(kg|g)/);
+    if (weightMatch) return parseFloat(weightMatch[1]);
+    const qtyMatch = w.match(/(\d+)/);
+    if (qtyMatch) return parseInt(qtyMatch[1]);
+    return undefined;
   }, [item?.weight]);
 
   if (!item) {
@@ -99,7 +109,7 @@ const ItemDetail = () => {
     const weightLabel = isWeightBased ? `${weightAmt} ${weightUnit}` : item.weight;
 
     if (isDbListing && dbId) {
-      await addToCart(dbId, cartQty, undefined);
+      await addToCart(dbId, cartQty, undefined, isWeightBased ? undefined : maxAmount);
     } else if (mockItem && id) {
       await addToCart(id, cartQty, {
         name: item.name,
@@ -107,7 +117,7 @@ const ItemDetail = () => {
         discount_price: isWeightBased ? subtotal : item.discountPrice,
         original_price: item.originalPrice,
         weight: weightLabel || item.weight,
-      });
+      }, isWeightBased ? undefined : maxAmount);
     }
     setReserved(true);
     setShowFloat(true);
@@ -234,8 +244,12 @@ const ItemDetail = () => {
                       {weightUnit === "kg" ? weightAmt.toFixed(2) : weightAmt} {weightUnit}
                     </span>
                     <button
-                      onClick={() => setWeightAmt((v) => weightUnit === "kg" ? +(v + 0.25).toFixed(2) : v + 50)}
-                      className="w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm"
+                      onClick={() => setWeightAmt((v) => {
+                        const next = weightUnit === "kg" ? +(v + 0.25).toFixed(2) : v + 50;
+                        if (maxAmount && next > maxAmount) { toast.error(`Max available: ${maxAmount} ${weightUnit}`); return v; }
+                        return next;
+                      })}
+                      className={`w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm ${maxAmount && weightAmt >= maxAmount ? "opacity-40" : ""}`}
                     >
                       <Plus size={14} />
                     </button>
@@ -253,8 +267,12 @@ const ItemDetail = () => {
                     </button>
                     <span className="text-sm font-bold text-foreground w-8 text-center">{qty}</span>
                     <button
-                      onClick={() => setQty((v) => v + 1)}
-                      className="w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm"
+                      onClick={() => setQty((v) => {
+                        const next = v + 1;
+                        if (maxAmount && next > maxAmount) { toast.error(`Max available: ${maxAmount}`); return v; }
+                        return next;
+                      })}
+                      className={`w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm ${maxAmount && qty >= maxAmount ? "opacity-40" : ""}`}
                     >
                       <Plus size={14} />
                     </button>
