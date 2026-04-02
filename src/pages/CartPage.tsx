@@ -16,6 +16,7 @@ const CartPage = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [deliveryChoice, setDeliveryChoice] = useState<"pickup" | "grab" | "lalamove" | null>(null);
   const [orderComplete, setOrderComplete] = useState(false);
+  const [showFPX, setShowFPX] = useState(false);
 
   if (!user) {
     return (
