@@ -5,7 +5,7 @@ import { groceryItems } from "@/data/mockData";
 import { toast } from "sonner";
 import { motion, useScroll, useTransform } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
-import { useListings } from "@/hooks/useListings";
+import { useListings, useListingById } from "@/hooks/useListings";
 import { useCart } from "@/contexts/CartContext";
 import { useChat } from "@/contexts/ChatContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,7 @@ const badgeColors: Record<string, string> = {
   expiry: "bg-[hsl(var(--badge-expiry))] text-primary-foreground",
   imperfect: "bg-primary text-primary-foreground",
   overstock: "bg-[hsl(var(--badge-overstock))] text-primary-foreground",
+  sold: "bg-destructive text-destructive-foreground",
 };
 
 const ItemDetail = () => {
@@ -34,8 +35,13 @@ const ItemDetail = () => {
 
   const isDbListing = id?.startsWith("db-");
   const dbId = isDbListing ? id.replace("db-", "") : null;
-  const dbItem = dbListings?.find((l) => l.id === dbId);
+  // Use useListingById for direct links (fetches any status), fall back to listing from useListings
+  const { data: directDbItem } = useListingById(dbId ?? undefined);
+  const dbItem = directDbItem || dbListings?.find((l) => l.id === dbId);
   const mockItem = !isDbListing ? groceryItems.find((i) => i.id === id) : null;
+
+  const isSold = dbItem?.status === "sold";
+  const stockLeft = dbItem?.stock_quantity ?? null;
 
   // Normalize item data
   const item = mockItem
@@ -53,7 +59,6 @@ const ItemDetail = () => {
         deliveryService: null as string | null,
         address: null as string | null,
         expiryDays: null as number | null,
-        // Mock items are treated as fixed pricing
         pricingType: "fixed" as string,
         pricePerUnit: null as number | null,
         unitType: "quantity" as string,
@@ -67,8 +72,8 @@ const ItemDetail = () => {
         weight: dbItem.weight || "",
         originalPrice: Number(dbItem.original_price),
         discountPrice: Number(dbItem.discount_price),
-        badge: dbItem.condition || "Discounted",
-        badgeType: "overstock" as const,
+        badge: isSold ? "SOLD" : (dbItem.condition || "Discounted"),
+        badgeType: isSold ? "sold" as const : "overstock" as const,
         reason: dbItem.reason || "Discounted item",
         deliveryType: dbItem.delivery_type,
         deliveryService: dbItem.delivery_service || null,
@@ -77,7 +82,7 @@ const ItemDetail = () => {
         pricingType: dbItem.pricing_type || "fixed",
         pricePerUnit: dbItem.price_per_unit ? Number(dbItem.price_per_unit) : null,
         unitType: dbItem.unit_type || "quantity",
-        maxQuantity: dbItem.max_quantity ? Number(dbItem.max_quantity) : null,
+        maxQuantity: stockLeft !== null ? stockLeft : (dbItem.max_quantity ? Number(dbItem.max_quantity) : null),
       }
     : null;
 
@@ -367,12 +372,17 @@ const ItemDetail = () => {
 
           <motion.button
             onClick={handleReserve}
-            whileTap={!reserved ? { scale: 0.96 } : {}}
+            disabled={isSold}
+            whileTap={!reserved && !isSold ? { scale: 0.96 } : {}}
             className={`w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-colors duration-300 ${
-              reserved ? "bg-accent text-primary" : "bg-primary text-primary-foreground"
+              isSold
+                ? "bg-muted text-muted-foreground cursor-not-allowed"
+                : reserved ? "bg-accent text-primary" : "bg-primary text-primary-foreground"
             }`}
           >
-            {reserved ? (
+            {isSold ? (
+              "Sold Out"
+            ) : reserved ? (
               <>
                 <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
                   <Check size={18} />

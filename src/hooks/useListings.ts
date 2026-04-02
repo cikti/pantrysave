@@ -26,6 +26,7 @@ export type Listing = {
   price_per_unit: number | null;
   unit_type: string;
   max_quantity: number | null;
+  stock_quantity: number;
   created_at: string;
   updated_at: string;
 };
@@ -51,6 +52,7 @@ export type CreateListingInput = {
   price_per_unit?: number;
   unit_type?: string;
   max_quantity?: number;
+  stock_quantity?: number;
 };
 
 export function useListings() {
@@ -65,6 +67,23 @@ export function useListings() {
       if (error) throw error;
       return data as Listing[];
     },
+  });
+}
+
+export function useListingById(id: string | undefined) {
+  return useQuery({
+    queryKey: ["listing", id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from("listings")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as Listing | null;
+    },
+    enabled: !!id,
   });
 }
 
@@ -118,6 +137,37 @@ export function useUpdateListingStatus() {
         .update({ status })
         .eq("id", id);
       if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
+      queryClient.invalidateQueries({ queryKey: ["my-listings"] });
+    },
+  });
+}
+
+export function usePurchaseListing() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
+      // Fetch current stock
+      const { data: listing, error: fetchError } = await supabase
+        .from("listings")
+        .select("stock_quantity")
+        .eq("id", id)
+        .single();
+      if (fetchError) throw fetchError;
+
+      const newStock = Math.max(0, (listing.stock_quantity ?? 1) - quantity);
+      const newStatus = newStock === 0 ? "sold" : "available";
+
+      const { error } = await supabase
+        .from("listings")
+        .update({ stock_quantity: newStock, status: newStatus as any })
+        .eq("id", id);
+      if (error) throw error;
+
+      return { newStock, newStatus };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["listings"] });

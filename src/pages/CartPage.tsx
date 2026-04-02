@@ -3,7 +3,7 @@ import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info, Square, Ch
 import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useUpdateListingStatus } from "@/hooks/useListings";
+import { useUpdateListingStatus, usePurchaseListing } from "@/hooks/useListings";
 import { usePoints } from "@/hooks/usePoints";
 import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
@@ -21,6 +21,7 @@ const CartPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const updateListingStatus = useUpdateListingStatus();
+  const purchaseListing = usePurchaseListing();
   const { earnPoints } = usePoints();
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
@@ -76,6 +77,7 @@ const CartPage = () => {
 
   const handleConfirmOrder = () => {
     if (!deliveryChoice) { toast.error("Please select a delivery option"); return; }
+    // Reserve items during checkout
     selectedItems.forEach((item) => {
       if (!item.isMock) {
         updateListingStatus.mutate({ id: item.listing_id, status: "reserved" });
@@ -88,9 +90,10 @@ const CartPage = () => {
 
   const handlePaymentSuccess = async (_paymentUrl: string) => {
     setShowFPX(false);
+    // Decrement stock and mark sold if stock reaches 0
     for (const item of selectedItems) {
       if (!item.isMock) {
-        await updateListingStatus.mutateAsync({ id: item.listing_id, status: "sold" });
+        await purchaseListing.mutateAsync({ id: item.listing_id, quantity: item.quantity });
       }
     }
     // Earn points: 1 point per RM1 spent (rounded)
