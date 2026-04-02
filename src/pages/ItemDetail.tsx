@@ -18,7 +18,6 @@ const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const { createReservation } = useReservations();
   const [reserved, setReserved] = useState(false);
   const [showFloat, setShowFloat] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
