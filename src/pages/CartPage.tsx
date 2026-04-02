@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info } from "lucide-react";
+import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info, Square, CheckSquare } from "lucide-react";
 import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,9 +25,34 @@ const CartPage = () => {
   const [deliveryChoice, setDeliveryChoice] = useState<"pickup" | "grab" | "lalamove" | null>(null);
   const [orderComplete, setOrderComplete] = useState(false);
   const [showFPX, setShowFPX] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const allSelected = items.length > 0 && items.every((i) => selectedIds.has(i.listing_id));
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(items.map((i) => i.listing_id)));
+    }
+  };
+
+  const selectedItems = useMemo(() => items.filter((i) => selectedIds.has(i.listing_id)), [items, selectedIds]);
+  const selectedTotal = useMemo(
+    () => selectedItems.reduce((sum, item) => sum + (item.listing?.discount_price || 0) * item.quantity, 0),
+    [selectedItems]
+  );
+  const selectedCount = selectedItems.length;
 
   const deliveryFee = deliveryChoice ? DELIVERY_FEES[deliveryChoice].fee : 0;
-  const grandTotal = total + deliveryFee;
+  const grandTotal = selectedTotal + deliveryFee;
 
   if (!user) {
     return (
@@ -42,13 +67,13 @@ const CartPage = () => {
   }
 
   const handleCheckout = () => {
+    if (selectedCount === 0) { toast.error("Please select items to checkout"); return; }
     setShowCheckout(true);
   };
 
   const handleConfirmOrder = () => {
     if (!deliveryChoice) { toast.error("Please select a delivery option"); return; }
-    // Mark DB listings as reserved/pending immediately
-    items.forEach((item) => {
+    selectedItems.forEach((item) => {
       if (!item.isMock) {
         updateListingStatus.mutate({ id: item.listing_id, status: "reserved" });
       }
@@ -59,21 +84,23 @@ const CartPage = () => {
 
   const handlePaymentSuccess = async (_paymentUrl: string) => {
     setShowFPX(false);
-    // Mark all DB listings as sold
-    for (const item of items) {
+    for (const item of selectedItems) {
       if (!item.isMock) {
         await updateListingStatus.mutateAsync({ id: item.listing_id, status: "sold" });
       }
     }
-    await clearCart();
+    // Remove only selected items from cart
+    for (const item of selectedItems) {
+      await removeFromCart(item.listing_id);
+    }
+    setSelectedIds(new Set());
     setOrderComplete(true);
     toast.success("Payment successful! 🌿 Nice save for the planet!");
     setTimeout(() => { setOrderComplete(false); navigate("/"); }, 2000);
   };
 
   const handlePaymentError = (error: string) => {
-    // Revert reserved listings back to available
-    items.forEach((item) => {
+    selectedItems.forEach((item) => {
       if (!item.isMock) {
         updateListingStatus.mutate({ id: item.listing_id, status: "available" });
       }
@@ -81,25 +108,10 @@ const CartPage = () => {
     toast.error(error);
   };
 
-  const handleDecrease = (item: CartItem) => {
-    if (item.quantity <= 1) {
-      setConfirmRemove(item.listing_id);
-    } else {
-      updateQuantity(item.listing_id, item.quantity - 1);
-    }
-  };
-
-  const handleIncrease = (item: CartItem) => {
-    if (item.maxQuantity && item.quantity >= item.maxQuantity) {
-      toast.error(`Maximum available is ${item.maxQuantity}`);
-      return;
-    }
-    updateQuantity(item.listing_id, item.quantity + 1);
-  };
-
   const confirmRemoveItem = () => {
     if (confirmRemove) {
       removeFromCart(confirmRemove);
+      setSelectedIds((prev) => { const next = new Set(prev); next.delete(confirmRemove); return next; });
       toast.success("Item removed from cart");
       setConfirmRemove(null);
     }
@@ -132,56 +144,95 @@ const CartPage = () => {
           </div>
         ) : (
           <div className="p-4 space-y-3">
-            {items.map((item, idx) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                className="flex gap-3 bg-card rounded-xl p-3 border border-border"
-              >
-                {item.listing?.image_url ? (
-                  <img src={item.listing.image_url} alt={item.listing?.name} className="w-20 h-20 rounded-lg object-cover shrink-0" />
-                ) : (
-                  <div className="w-20 h-20 rounded-lg bg-muted shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-foreground truncate">{item.listing?.name || "Item"}</p>
-                  {item.listing?.weight && (
-                    <p className="text-xs text-muted-foreground">{item.listing.weight}</p>
-                  )}
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <span className="text-primary font-bold text-sm">RM{(item.listing?.discount_price || 0).toFixed(2)}</span>
-                    {item.listing?.original_price && (
-                      <span className="text-xs text-muted-foreground line-through">RM{item.listing.original_price.toFixed(2)}</span>
+            {/* Select All */}
+            <button
+              onClick={toggleAll}
+              className="flex items-center gap-2 px-1 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {allSelected ? (
+                <CheckSquare size={18} className="text-primary" />
+              ) : (
+                <Square size={18} />
+              )}
+              <span className="text-xs font-medium">Select All</span>
+            </button>
+
+            {items.map((item, idx) => {
+              const isSelected = selectedIds.has(item.listing_id);
+              return (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className={`flex gap-3 rounded-xl p-3 border-2 transition-colors ${
+                    isSelected
+                      ? "border-primary/40 bg-primary/5"
+                      : "border-border bg-card"
+                  }`}
+                >
+                  {/* Checkbox */}
+                  <button
+                    onClick={() => toggleSelect(item.listing_id)}
+                    className="self-center shrink-0"
+                  >
+                    {isSelected ? (
+                      <CheckSquare size={20} className="text-primary" />
+                    ) : (
+                      <Square size={20} className="text-muted-foreground" />
                     )}
+                  </button>
+
+                  {item.listing?.image_url ? (
+                    <img src={item.listing.image_url} alt={item.listing?.name} className="w-20 h-20 rounded-lg object-cover shrink-0" />
+                  ) : (
+                    <div className="w-20 h-20 rounded-lg bg-muted shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-foreground truncate">{item.listing?.name || "Item"}</p>
+                    {item.listing?.weight && (
+                      <p className="text-xs text-muted-foreground">{item.listing.weight}</p>
+                    )}
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className="text-primary font-bold text-sm">RM{(item.listing?.discount_price || 0).toFixed(2)}</span>
+                      {item.listing?.original_price && (
+                        <span className="text-xs text-muted-foreground line-through">RM{item.listing.original_price.toFixed(2)}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xs text-muted-foreground">
+                        Qty: {item.quantity}{item.listing?.weight ? ` · ${item.listing.weight}` : ""}
+                      </span>
+                      <button onClick={() => setConfirmRemove(item.listing_id)} className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-muted-foreground">
-                      Qty: {item.quantity}{item.listing?.weight ? ` · ${item.listing.weight}` : ""}
-                    </span>
-                    <button onClick={() => setConfirmRemove(item.listing_id)} className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
         )}
 
         {items.length > 0 && !showCheckout && (
           <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border p-4 z-30">
             <div className="flex justify-between items-center mb-3">
-              <span className="text-sm text-muted-foreground">Total</span>
-              <span className="text-xl font-bold text-primary">RM{total.toFixed(2)}</span>
+              <span className="text-sm text-muted-foreground">
+                Total ({selectedCount} selected)
+              </span>
+              <span className="text-xl font-bold text-primary">RM{selectedTotal.toFixed(2)}</span>
             </div>
             <motion.button
               whileTap={{ scale: 0.96 }}
               onClick={handleCheckout}
-              className="w-full bg-primary text-primary-foreground font-semibold py-4 rounded-2xl shadow-lg"
+              disabled={selectedCount === 0}
+              className={`w-full font-semibold py-4 rounded-2xl shadow-lg transition-colors ${
+                selectedCount > 0
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground cursor-not-allowed"
+              }`}
             >
-              Buy ({count} item{count !== 1 ? "s" : ""})
+              {selectedCount > 0 ? `Checkout (${selectedCount})` : "Select items to checkout"}
             </motion.button>
           </div>
         )}
@@ -243,7 +294,6 @@ const CartPage = () => {
                   ))}
                 </div>
 
-                {/* Fee tooltip */}
                 {deliveryChoice && deliveryChoice !== "pickup" && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
@@ -255,11 +305,10 @@ const CartPage = () => {
                   </motion.div>
                 )}
 
-                {/* Price breakdown */}
                 <div className="mt-5 mb-3 space-y-1.5">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground">Subtotal</span>
-                    <span className="text-sm font-medium text-foreground">RM{total.toFixed(2)}</span>
+                    <span className="text-xs text-muted-foreground">Subtotal ({selectedCount} items)</span>
+                    <span className="text-sm font-medium text-foreground">RM{selectedTotal.toFixed(2)}</span>
                   </div>
                   {deliveryFee > 0 && (
                     <div className="flex justify-between items-center">
@@ -367,8 +416,7 @@ const CartPage = () => {
           orderId={`PS-${Date.now().toString(36).toUpperCase()}`}
           onClose={() => {
             setShowFPX(false);
-            // Revert reserved status on cancel
-            items.forEach((item) => {
+            selectedItems.forEach((item) => {
               if (!item.isMock) {
                 updateListingStatus.mutate({ id: item.listing_id, status: "available" });
               }
