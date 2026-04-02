@@ -30,6 +30,7 @@ const HomePage = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [showRecent, setShowRecent] = useState(false);
+  const [showMessage, setShowMessage] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>(getRecentSearches);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
