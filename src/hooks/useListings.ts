@@ -16,8 +16,10 @@ export type Listing = {
   longitude: number | null;
   address: string | null;
   delivery_type: "pickup" | "third_party";
+  delivery_service: string | null;
   status: "available" | "reserved" | "sold";
   reason: string | null;
+  expiry_days: number | null;
   created_at: string;
   updated_at: string;
 };
