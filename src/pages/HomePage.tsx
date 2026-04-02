@@ -6,6 +6,7 @@ import PageTransition from "@/components/PageTransition";
 import UserAvatar from "@/components/UserAvatar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useListings } from "@/hooks/useListings";
+import { useCart } from "@/contexts/CartContext";
 import type { GroceryItem } from "@/data/mockData";
 
 const STORAGE_KEY = "pantrysave_recent_searches";
