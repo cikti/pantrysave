@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { MapPin, Search } from "lucide-react";
+import { useState, useMemo } from "react";
+import { MapPin, Search, X } from "lucide-react";
 import { categories, groceryItems } from "@/data/mockData";
 import GroceryCard from "@/components/GroceryCard";
 import PageTransition from "@/components/PageTransition";
@@ -8,17 +8,33 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const HomePage = () => {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
 
-  const filtered =
-    activeCategory === "All"
+  const filtered = useMemo(() => {
+    let items = activeCategory === "All"
       ? groceryItems
       : groceryItems.filter((i) => i.category === activeCategory);
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      items = items.filter(
+        (i) =>
+          i.name.toLowerCase().includes(q) ||
+          i.category.toLowerCase().includes(q) ||
+          i.seller.toLowerCase().includes(q) ||
+          i.reason.toLowerCase().includes(q) ||
+          i.badge.toLowerCase().includes(q)
+      );
+    }
+
+    return items;
+  }, [activeCategory, searchQuery]);
 
   return (
     <PageTransition>
       <div className="min-h-screen pb-24 md:pb-8">
-        {/* Mobile Header - hidden on desktop (sidebar handles nav) */}
+        {/* Mobile Header */}
         {isMobile && (
           <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md px-4 pt-4 pb-3">
             <div className="flex items-center justify-between">
@@ -31,15 +47,32 @@ const HomePage = () => {
                   <span>Taman Melawati</span>
                 </button>
               </div>
-              <div className="flex items-center gap-2">
-                <button className="w-9 h-9 rounded-full bg-card flex items-center justify-center shadow-sm active:scale-95 transition-transform">
-                  <Search size={18} className="text-foreground" />
-                </button>
-                <UserAvatar size="sm" />
-              </div>
+              <UserAvatar size="sm" />
             </div>
           </header>
         )}
+
+        {/* Search bar */}
+        <div className="px-4 md:px-6 pt-3 pb-1">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search for food, items, or categories…"
+              className="w-full h-10 pl-9 pr-9 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-shadow"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground active:scale-90 transition-transform"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Category pills */}
         <div className="sticky top-0 md:top-0 z-30 bg-background/90 backdrop-blur-md px-4 md:px-6 py-3">
@@ -60,7 +93,7 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* Grid - responsive columns */}
+        {/* Grid */}
         <main className="px-4 md:px-6 mt-4">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
             {filtered.map((item, i) => (
@@ -68,9 +101,12 @@ const HomePage = () => {
             ))}
           </div>
           {filtered.length === 0 && (
-            <p className="text-center text-muted-foreground text-sm mt-12">
-              No items in this category yet.
-            </p>
+            <div className="text-center mt-16">
+              <p className="text-muted-foreground text-sm">No items found</p>
+              <p className="text-muted-foreground/70 text-xs mt-1">
+                Try different keywords or browse a category
+              </p>
+            </div>
           )}
         </main>
       </div>
