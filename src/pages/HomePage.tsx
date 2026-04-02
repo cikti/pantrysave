@@ -5,6 +5,7 @@ import GroceryCard from "@/components/GroceryCard";
 import PageTransition from "@/components/PageTransition";
 import UserAvatar from "@/components/UserAvatar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
 import { useListings } from "@/hooks/useListings";
 import { useCart } from "@/contexts/CartContext";
 import type { GroceryItem } from "@/data/mockData";
