@@ -197,10 +197,10 @@ export function useCreateConversation() {
 export function useTotalUnread() {
   const { user } = useAuth();
   const [count, setCount] = useState(0);
+  const channelRef = useRef(`unread-count-${Math.random().toString(36).slice(2)}`);
 
-  const fetch = useCallback(async () => {
+  const fetchUnread = useCallback(async () => {
     if (!user) { setCount(0); return; }
-    // Get all conversation IDs where user is buyer or seller
     const { data: convos } = await supabase
       .from("conversations")
       .select("id");
@@ -215,19 +215,18 @@ export function useTotalUnread() {
     setCount(unread || 0);
   }, [user]);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetchUnread(); }, [fetchUnread]);
 
-  // Realtime for new messages
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel("unread-count")
+      .channel(channelRef.current)
       .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, () => {
-        fetch();
+        fetchUnread();
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user, fetch]);
+  }, [user, fetchUnread]);
 
   return count;
 }
