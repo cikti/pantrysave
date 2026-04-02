@@ -298,6 +298,16 @@ const CartPage = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* FPX Payment Modal */}
+        <FPXPaymentModal
+          open={showFPX}
+          amount={total}
+          orderId={`PS-${Date.now().toString(36).toUpperCase()}`}
+          onClose={() => setShowFPX(false)}
+          onSuccess={handlePaymentSuccess}
+          onError={handlePaymentError}
+        />
       </div>
     </PageTransition>
   );
