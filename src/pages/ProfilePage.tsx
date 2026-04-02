@@ -20,6 +20,7 @@ const ProfilePage = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { avatarUrl, uploadAvatar } = useAvatar();
+  const { balance: pointsBalance } = usePoints();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<"impact" | "listings">("impact");
