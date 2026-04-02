@@ -374,6 +374,16 @@ const CartPage = () => {
                 <Check size={36} className="text-primary-foreground" />
               </motion.div>
               <p className="text-lg font-bold text-foreground">Order Placed! 🌿</p>
+              {showPointsFloat && (
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-sm font-bold text-primary"
+                >
+                  +{showPointsFloat} points earned! 🎉
+                </motion.p>
+              )}
               <p className="text-sm text-muted-foreground">Redirecting you home...</p>
             </motion.div>
           )}
