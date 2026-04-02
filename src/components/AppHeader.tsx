@@ -1,16 +1,12 @@
-import { ShoppingCart, MessageCircle } from "lucide-react";
-import { useState } from "react";
+import { ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import UserAvatar from "@/components/UserAvatar";
 import { useCart } from "@/contexts/CartContext";
-import MessageSellerModal from "@/components/MessageSellerModal";
-import { toast } from "sonner";
 
 const AppHeader = () => {
   const navigate = useNavigate();
   const { count } = useCart();
-  const [showMessage, setShowMessage] = useState(false);
 
   return (
     <header className="h-14 flex items-center justify-between border-b border-border bg-card px-4 shrink-0">
@@ -21,12 +17,6 @@ const AppHeader = () => {
         </h1>
       </div>
       <div className="flex items-center gap-3">
-        <button
-          onClick={() => setShowMessage(true)}
-          className="relative w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted active:scale-90 transition-transform"
-        >
-          <MessageCircle size={18} className="text-foreground" />
-        </button>
         <button
           onClick={() => navigate("/cart")}
           className="relative w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted active:scale-90 transition-transform"
@@ -40,11 +30,6 @@ const AppHeader = () => {
         </button>
         <UserAvatar size="sm" />
       </div>
-      <MessageSellerModal
-        open={showMessage}
-        onClose={() => setShowMessage(false)}
-        onMessageSent={() => toast.success("Message sent to seller! ✉️")}
-      />
     </header>
   );
 };

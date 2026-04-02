@@ -1,15 +1,13 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { MapPin, Search, X, Clock, Trash2, ShoppingCart, MessageCircle } from "lucide-react";
+import { MapPin, Search, X, Clock, Trash2, ShoppingCart } from "lucide-react";
 import { categories, groceryItems } from "@/data/mockData";
 import GroceryCard from "@/components/GroceryCard";
 import PageTransition from "@/components/PageTransition";
 import UserAvatar from "@/components/UserAvatar";
-import MessageSellerModal from "@/components/MessageSellerModal";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate } from "react-router-dom";
 import { useListings } from "@/hooks/useListings";
 import { useCart } from "@/contexts/CartContext";
-import { toast } from "sonner";
 import type { GroceryItem } from "@/data/mockData";
 
 const STORAGE_KEY = "pantrysave_recent_searches";

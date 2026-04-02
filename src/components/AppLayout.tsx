@@ -2,7 +2,6 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import AppHeader from "@/components/AppHeader";
 import BottomNav from "@/components/BottomNav";
-import ChatBox from "@/components/ChatBox";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
