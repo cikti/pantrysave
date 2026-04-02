@@ -71,7 +71,7 @@ const StatusIcon = ({ status }: { status: ChatMessage["status"] }) => {
   if (status === "sent") return <Check size={12} className="text-muted-foreground/60" />;
   if (status === "delivered")
     return <CheckCheck size={12} className="text-muted-foreground/60" />;
-  return <CheckCheck size={12} className="text-sky-500" />;
+  return <CheckCheck size={12} className="text-primary" />;
 };
 
 /* ── Component ── */
