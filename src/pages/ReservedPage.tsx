@@ -31,8 +31,16 @@ const ReservedPage = () => {
 
   const handleCollect = async (id: string) => {
     try {
+      const reservation = reservations.find((r) => r.id === id);
       await markCollected(id);
-      toast.success("Marked as collected! 🌿");
+      // Earn points on collection
+      const points = Math.max(1, Math.round(reservation?.listing?.discount_price || 5));
+      try {
+        await earnPoints.mutateAsync({ amount: points, description: `Collected: ${reservation?.listing?.name || "item"}` });
+        toast.success(`Collected! +${points} points earned 🌿`);
+      } catch {
+        toast.success("Marked as collected! 🌿");
+      }
     } catch {
       toast.error("Failed to update status");
     }
