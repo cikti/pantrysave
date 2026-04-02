@@ -136,6 +136,56 @@ export type Database = {
         }
         Relationships: []
       }
+      reservations: {
+        Row: {
+          address: string | null
+          created_at: string
+          delivery_service: string | null
+          delivery_type: string | null
+          id: string
+          latitude: number | null
+          listing_id: string
+          longitude: number | null
+          status: Database["public"]["Enums"]["reservation_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          delivery_service?: string | null
+          delivery_type?: string | null
+          id?: string
+          latitude?: number | null
+          listing_id: string
+          longitude?: number | null
+          status?: Database["public"]["Enums"]["reservation_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          delivery_service?: string | null
+          delivery_type?: string | null
+          id?: string
+          latitude?: number | null
+          listing_id?: string
+          longitude?: number | null
+          status?: Database["public"]["Enums"]["reservation_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -146,6 +196,7 @@ export type Database = {
     Enums: {
       delivery_type: "pickup" | "third_party"
       listing_status: "available" | "reserved" | "sold"
+      reservation_status: "reserved" | "collected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -275,6 +326,7 @@ export const Constants = {
     Enums: {
       delivery_type: ["pickup", "third_party"],
       listing_status: ["available", "reserved", "sold"],
+      reservation_status: ["reserved", "collected"],
     },
   },
 } as const

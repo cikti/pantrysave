@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Leaf, Wallet, ShoppingBag, TrendingUp, LogOut, Award, Camera, User } from "lucide-react";
+import { Leaf, Wallet, ShoppingBag, TrendingUp, LogOut, Award, Camera, User, Package } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -100,6 +100,13 @@ const ProfilePage = () => {
             }`}
           >
             My Listings
+          </button>
+          <button
+            onClick={() => navigate("/reserved")}
+            className="flex-1 text-xs font-medium py-2.5 rounded-xl transition-all bg-card text-muted-foreground flex items-center justify-center gap-1"
+          >
+            <Package size={12} />
+            Reserved
           </button>
         </div>
 

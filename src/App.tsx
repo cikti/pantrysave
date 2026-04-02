@@ -9,6 +9,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import ItemDetail from "./pages/ItemDetail";
 import CartPage from "./pages/CartPage";
+import ReservedPage from "./pages/ReservedPage";
 import SellPage from "./pages/SellPage";
 import ProfilePage from "./pages/ProfilePage";
 import MapPage from "./pages/MapPage";
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/item/:id" element={<ItemDetail />} />
               <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+              <Route path="/reserved" element={<ProtectedRoute><ReservedPage /></ProtectedRoute>} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route
