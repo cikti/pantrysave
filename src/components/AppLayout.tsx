@@ -2,6 +2,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import AppHeader from "@/components/AppHeader";
 import BottomNav from "@/components/BottomNav";
+import ChatDrawer from "@/components/ChatDrawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
@@ -12,6 +13,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="min-h-screen max-w-lg mx-auto relative">
         {children}
         <BottomNav />
+        <ChatDrawer />
       </div>
     );
   }
@@ -26,7 +28,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             {children}
           </main>
         </div>
-        
+        <ChatDrawer />
       </div>
     </SidebarProvider>
   );

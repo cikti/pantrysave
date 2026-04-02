@@ -1,12 +1,14 @@
 import { useState, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ShoppingCart, Info, Check, MapPin, Truck, Minus, Plus } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Info, Check, MapPin, Truck, Minus, Plus, MessageCircle } from "lucide-react";
 import { groceryItems } from "@/data/mockData";
 import { toast } from "sonner";
 import { motion, useScroll, useTransform } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import { useListings } from "@/hooks/useListings";
 import { useCart } from "@/contexts/CartContext";
+import { useChat } from "@/contexts/ChatContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const badgeColors: Record<string, string> = {
   expiry: "bg-[hsl(var(--badge-expiry))] text-primary-foreground",
@@ -18,6 +20,8 @@ const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { openChat } = useChat();
+  const { user } = useAuth();
   const [reserved, setReserved] = useState(false);
   const [showFloat, setShowFloat] = useState(false);
   const [qty, setQty] = useState(1);
@@ -269,6 +273,33 @@ const ItemDetail = () => {
               <p className="text-xs text-muted-foreground mt-1">{item.reason}</p>
             </div>
           </motion.div>
+
+          {/* Chat with Seller button */}
+          <motion.button
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              if (!user) {
+                toast.error("Please log in to chat with the seller");
+                navigate("/login");
+                return;
+              }
+              const sellerId = dbItem?.user_id || "mock-seller";
+              openChat(undefined, {
+                productId: id || "",
+                productName: item.name,
+                productImage: item.image,
+                sellerId,
+                sellerName: item.seller,
+              });
+            }}
+            className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-card border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors"
+          >
+            <MessageCircle size={16} className="text-primary" />
+            Chat with Seller
+          </motion.button>
         </div>
 
         {showFloat && (

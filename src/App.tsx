@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { ChatProvider } from "@/contexts/ChatContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import ItemDetail from "./pages/ItemDetail";
@@ -28,6 +29,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <CartProvider>
+          <ChatProvider>
           <AppLayout>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -56,6 +58,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AppLayout>
+          </ChatProvider>
           </CartProvider>
         </AuthProvider>
       </BrowserRouter>
