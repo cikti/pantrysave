@@ -30,6 +30,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { openChat } = useChat();
   const unreadCount = useTotalUnread();
+  const { count: cartCount } = useCart();
 
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
@@ -55,7 +56,14 @@ export function AppSidebar() {
                       className="hover:bg-muted/50"
                       activeClassName="bg-muted text-primary font-medium"
                     >
-                      <item.icon className="mr-2 h-4 w-4" />
+                      <div className="relative mr-2">
+                        <item.icon className="h-4 w-4" />
+                        {item.title === "Cart" && cartCount > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-[#EF4444] text-white text-[11px] font-bold rounded-full flex items-center justify-center px-1">
+                            {cartCount > 99 ? "99+" : cartCount}
+                          </span>
+                        )}
+                      </div>
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
