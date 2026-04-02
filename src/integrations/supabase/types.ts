@@ -60,10 +60,14 @@ export type Database = {
           image_url: string | null
           latitude: number | null
           longitude: number | null
+          max_quantity: number | null
           name: string
           original_price: number
+          price_per_unit: number | null
+          pricing_type: string
           reason: string | null
           status: Database["public"]["Enums"]["listing_status"]
+          unit_type: string
           updated_at: string
           user_id: string
           weight: string | null
@@ -81,10 +85,14 @@ export type Database = {
           image_url?: string | null
           latitude?: number | null
           longitude?: number | null
+          max_quantity?: number | null
           name: string
           original_price: number
+          price_per_unit?: number | null
+          pricing_type?: string
           reason?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
+          unit_type?: string
           updated_at?: string
           user_id: string
           weight?: string | null
@@ -102,10 +110,14 @@ export type Database = {
           image_url?: string | null
           latitude?: number | null
           longitude?: number | null
+          max_quantity?: number | null
           name?: string
           original_price?: number
+          price_per_unit?: number | null
+          pricing_type?: string
           reason?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
+          unit_type?: string
           updated_at?: string
           user_id?: string
           weight?: string | null

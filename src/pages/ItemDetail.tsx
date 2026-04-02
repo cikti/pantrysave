@@ -28,7 +28,6 @@ const ItemDetail = () => {
   const imageOpacity = useTransform(scrollY, [0, 300], [1, 0.7]);
   const { data: dbListings } = useListings();
 
-  // Check if it's a DB listing
   const isDbListing = id?.startsWith("db-");
   const dbId = isDbListing ? id.replace("db-", "") : null;
   const dbItem = dbListings?.find((l) => l.id === dbId);
@@ -47,7 +46,14 @@ const ItemDetail = () => {
         badgeType: mockItem.badgeType,
         reason: mockItem.reason,
         deliveryType: null as string | null,
+        deliveryService: null as string | null,
         address: null as string | null,
+        expiryDays: null as number | null,
+        // Mock items are treated as fixed pricing
+        pricingType: "fixed" as string,
+        pricePerUnit: null as number | null,
+        unitType: "quantity" as string,
+        maxQuantity: null as number | null,
       }
     : dbItem
     ? {
@@ -61,32 +67,22 @@ const ItemDetail = () => {
         badgeType: "overstock" as const,
         reason: dbItem.reason || "Discounted item",
         deliveryType: dbItem.delivery_type,
-        deliveryService: (dbItem as any).delivery_service || null,
+        deliveryService: dbItem.delivery_service || null,
         address: dbItem.address,
-        expiryDays: (dbItem as any).expiry_days || null,
+        expiryDays: dbItem.expiry_days || null,
+        pricingType: dbItem.pricing_type || "fixed",
+        pricePerUnit: dbItem.price_per_unit ? Number(dbItem.price_per_unit) : null,
+        unitType: dbItem.unit_type || "quantity",
+        maxQuantity: dbItem.max_quantity ? Number(dbItem.max_quantity) : null,
       }
     : null;
 
-  // Detect if listing is weight-based or quantity-based
-  const isWeightBased = useMemo(() => {
-    const w = ((item?.weight) || "").toLowerCase();
-    return /\d+(\.\d+)?\s*(kg|g)\b/.test(w);
-  }, [item?.weight]);
+  const isFixed = item?.pricingType === "fixed";
+  const isFlexible = item?.pricingType === "flexible";
 
-  const weightUnit = useMemo(() => {
-    const w = ((item?.weight) || "").toLowerCase();
-    return w.includes("kg") ? "kg" : "g";
-  }, [item?.weight]);
-
-  // Parse max from weight string (e.g. "1kg" → 1, "500g" → 500, "6 pcs" → 6)
-  const maxAmount = useMemo(() => {
-    const w = ((item?.weight) || "").toLowerCase();
-    const weightMatch = w.match(/([\d.]+)\s*(kg|g)/);
-    if (weightMatch) return parseFloat(weightMatch[1]);
-    const qtyMatch = w.match(/(\d+)/);
-    if (qtyMatch) return parseInt(qtyMatch[1]);
-    return undefined;
-  }, [item?.weight]);
+  const isWeightUnit = item?.unitType === "kg" || item?.unitType === "g";
+  const weightUnit = item?.unitType === "g" ? "g" : "kg";
+  const maxAmount = item?.maxQuantity ?? undefined;
 
   if (!item) {
     return (
@@ -99,26 +95,68 @@ const ItemDetail = () => {
   const saving = (item.originalPrice - item.discountPrice).toFixed(2);
   const discount = Math.round(((item.originalPrice - item.discountPrice) / item.originalPrice) * 100);
 
-  const subtotal = isWeightBased
-    ? item.discountPrice * weightAmt * (weightUnit === "g" ? 0.001 : 1)
-    : item.discountPrice * qty;
+  // Calculate subtotal
+  let subtotal: number;
+  if (isFixed) {
+    subtotal = item.discountPrice;
+  } else if (isFlexible && isWeightUnit) {
+    const perUnit = item.pricePerUnit ?? item.discountPrice;
+    subtotal = perUnit * weightAmt * (weightUnit === "g" ? 0.001 : 1);
+  } else {
+    // flexible quantity
+    const perUnit = item.pricePerUnit ?? item.discountPrice;
+    subtotal = perUnit * qty;
+  }
+
+  // Price display label
+  const priceLabel = isFlexible && item.pricePerUnit
+    ? `RM${item.pricePerUnit.toFixed(2)} / ${item.unitType === "quantity" ? "unit" : item.unitType}`
+    : null;
 
   const handleReserve = async () => {
     if (reserved) return;
-    const cartQty = isWeightBased ? 1 : qty;
-    const weightLabel = isWeightBased ? `${weightAmt} ${weightUnit}` : item.weight;
 
-    if (isDbListing && dbId) {
-      await addToCart(dbId, cartQty, undefined, isWeightBased ? undefined : maxAmount);
-    } else if (mockItem && id) {
-      await addToCart(id, cartQty, {
-        name: item.name,
-        image_url: item.image,
-        discount_price: isWeightBased ? subtotal : item.discountPrice,
-        original_price: item.originalPrice,
-        weight: weightLabel || item.weight,
-      }, isWeightBased ? undefined : maxAmount);
+    if (isFixed) {
+      // Fixed item — add as-is
+      if (isDbListing && dbId) {
+        await addToCart(dbId, 1, undefined, 1);
+      } else if (mockItem && id) {
+        await addToCart(id, 1, {
+          name: item.name,
+          image_url: item.image,
+          discount_price: item.discountPrice,
+          original_price: item.originalPrice,
+          weight: item.weight,
+        }, 1);
+      }
+    } else if (isFlexible && isWeightUnit) {
+      // Flexible weight — store subtotal as price, 1 qty
+      if (isDbListing && dbId) {
+        await addToCart(dbId, 1, undefined, 1);
+      } else if (mockItem && id) {
+        await addToCart(id, 1, {
+          name: item.name,
+          image_url: item.image,
+          discount_price: subtotal,
+          original_price: item.originalPrice,
+          weight: `${weightAmt} ${weightUnit}`,
+        }, 1);
+      }
+    } else {
+      // Flexible quantity
+      if (isDbListing && dbId) {
+        await addToCart(dbId, qty, undefined, maxAmount);
+      } else if (mockItem && id) {
+        await addToCart(id, qty, {
+          name: item.name,
+          image_url: item.image,
+          discount_price: item.pricePerUnit ?? item.discountPrice,
+          original_price: item.originalPrice,
+          weight: item.weight,
+        }, maxAmount);
+      }
     }
+
     setReserved(true);
     setShowFloat(true);
     toast.success(`Added to cart! 🛒 ${item.name}`, {
@@ -173,13 +211,26 @@ const ItemDetail = () => {
 
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="flex items-baseline gap-3 mt-3">
             <span className="text-muted-foreground line-through text-sm">RM{item.originalPrice.toFixed(2)}</span>
-            <span className="text-2xl font-bold text-primary">RM{item.discountPrice.toFixed(2)}</span>
-            <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded-full font-medium">{discount}% off</span>
+            <span className="text-2xl font-bold text-primary">
+              {isFixed ? `RM${item.discountPrice.toFixed(2)}` : priceLabel || `RM${item.discountPrice.toFixed(2)}`}
+            </span>
+            {isFixed && (
+              <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded-full font-medium">{discount}% off</span>
+            )}
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.35 }} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary bg-accent px-3 py-1 rounded-full">
-            🎉 You save RM{saving}
+          {/* Pricing type label */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.28 }} className="mt-1">
+            <span className="text-[11px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+              {isFixed ? "Fixed price" : `Flexible — per ${item.unitType === "quantity" ? "unit" : item.unitType}`}
+            </span>
           </motion.div>
+
+          {isFixed && (
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.35 }} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary bg-accent px-3 py-1 rounded-full">
+              🎉 You save RM{saving}
+            </motion.div>
+          )}
 
           {/* Delivery info */}
           {item.deliveryType && (
@@ -205,7 +256,7 @@ const ItemDetail = () => {
           {/* Expiry info */}
           {item.expiryDays && (
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.39 }} className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="inline-block w-2 h-2 rounded-full bg-amber-400" />
+              <span className="inline-block w-2 h-2 rounded-full bg-[hsl(var(--badge-expiry))]" />
               Expires in ~{item.expiryDays} day{item.expiryDays > 1 ? "s" : ""}
             </motion.div>
           )}
@@ -227,10 +278,10 @@ const ItemDetail = () => {
         )}
 
         <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border z-30 p-4">
-          {/* Quantity / Weight selector */}
-          {!reserved && (
+          {/* Quantity / Weight selector — only for flexible */}
+          {!reserved && isFlexible && (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-3">
-              {isWeightBased ? (
+              {isWeightUnit ? (
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-medium text-muted-foreground">Weight:</span>
                   <div className="flex items-center gap-1.5 bg-muted rounded-xl px-1 py-1">
