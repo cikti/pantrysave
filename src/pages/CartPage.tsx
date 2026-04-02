@@ -1,22 +1,33 @@
-import { useState } from "react";
-import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, ExternalLink, Check } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info } from "lucide-react";
 import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUpdateListingStatus } from "@/hooks/useListings";
 import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
 import FPXPaymentModal from "@/components/FPXPaymentModal";
 
+const DELIVERY_FEES: Record<string, { fee: number; label: string }> = {
+  grab: { fee: 8, label: "GrabExpress" },
+  lalamove: { fee: 6, label: "Lalamove" },
+  pickup: { fee: 0, label: "Self Pickup" },
+};
+
 const CartPage = () => {
   const { items, count, total, loading, removeFromCart, updateQuantity, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const updateListingStatus = useUpdateListingStatus();
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [deliveryChoice, setDeliveryChoice] = useState<"pickup" | "grab" | "lalamove" | null>(null);
   const [orderComplete, setOrderComplete] = useState(false);
   const [showFPX, setShowFPX] = useState(false);
+
+  const deliveryFee = deliveryChoice ? DELIVERY_FEES[deliveryChoice].fee : 0;
+  const grandTotal = total + deliveryFee;
 
   if (!user) {
     return (
@@ -36,12 +47,24 @@ const CartPage = () => {
 
   const handleConfirmOrder = () => {
     if (!deliveryChoice) { toast.error("Please select a delivery option"); return; }
+    // Mark DB listings as reserved/pending immediately
+    items.forEach((item) => {
+      if (!item.isMock) {
+        updateListingStatus.mutate({ id: item.listing_id, status: "reserved" });
+      }
+    });
     setShowCheckout(false);
     setShowFPX(true);
   };
 
   const handlePaymentSuccess = async (_paymentUrl: string) => {
     setShowFPX(false);
+    // Mark all DB listings as sold
+    for (const item of items) {
+      if (!item.isMock) {
+        await updateListingStatus.mutateAsync({ id: item.listing_id, status: "sold" });
+      }
+    }
     await clearCart();
     setOrderComplete(true);
     toast.success("Payment successful! 🌿 Nice save for the planet!");
@@ -49,6 +72,12 @@ const CartPage = () => {
   };
 
   const handlePaymentError = (error: string) => {
+    // Revert reserved listings back to available
+    items.forEach((item) => {
+      if (!item.isMock) {
+        updateListingStatus.mutate({ id: item.listing_id, status: "available" });
+      }
+    });
     toast.error(error);
   };
 
@@ -180,9 +209,9 @@ const CartPage = () => {
 
                 <div className="space-y-3">
                   {([
-                    { key: "pickup" as const, icon: MapPin, label: "Self Pickup", desc: "Collect from the seller's location" },
-                    { key: "grab" as const, icon: Truck, label: "Grab Delivery", desc: "Have it delivered via Grab" },
-                    { key: "lalamove" as const, icon: Truck, label: "Lalamove Delivery", desc: "Have it delivered via Lalamove" },
+                    { key: "pickup" as const, icon: MapPin, label: "Self Pickup", desc: "Collect from the seller's location", fee: 0 },
+                    { key: "grab" as const, icon: Truck, label: "GrabExpress", desc: "Delivered via Grab", fee: DELIVERY_FEES.grab.fee },
+                    { key: "lalamove" as const, icon: Truck, label: "Lalamove", desc: "Delivered via Lalamove", fee: DELIVERY_FEES.lalamove.fee },
                   ]).map((opt) => (
                     <button
                       key={opt.key}
@@ -202,14 +231,46 @@ const CartPage = () => {
                         <p className="text-sm font-semibold text-foreground">{opt.label}</p>
                         <p className="text-xs text-muted-foreground">{opt.desc}</p>
                       </div>
+                      <div className="text-right shrink-0">
+                        {opt.fee > 0 ? (
+                          <span className="text-xs font-semibold text-primary">+RM{opt.fee.toFixed(2)}</span>
+                        ) : (
+                          <span className="text-xs font-medium text-muted-foreground">Free</span>
+                        )}
+                      </div>
                       {deliveryChoice === opt.key && <Check size={18} className="text-primary shrink-0" />}
                     </button>
                   ))}
                 </div>
 
-                <div className="flex justify-between items-center mt-5 mb-3">
-                  <span className="text-sm text-muted-foreground">Total</span>
-                  <span className="text-lg font-bold text-primary">RM{total.toFixed(2)}</span>
+                {/* Fee tooltip */}
+                {deliveryChoice && deliveryChoice !== "pickup" && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="mt-3 flex items-start gap-2 p-3 rounded-xl bg-muted/50 text-xs text-muted-foreground"
+                  >
+                    <Info size={14} className="shrink-0 mt-0.5 text-primary" />
+                    <span>This delivery fee goes to {DELIVERY_FEES[deliveryChoice].label}, not the seller.</span>
+                  </motion.div>
+                )}
+
+                {/* Price breakdown */}
+                <div className="mt-5 mb-3 space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-muted-foreground">Subtotal</span>
+                    <span className="text-sm font-medium text-foreground">RM{total.toFixed(2)}</span>
+                  </div>
+                  {deliveryFee > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-muted-foreground">Delivery fee ({DELIVERY_FEES[deliveryChoice!].label})</span>
+                      <span className="text-sm font-medium text-foreground">RM{deliveryFee.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="border-t border-border pt-1.5 flex justify-between items-center">
+                    <span className="text-sm font-semibold text-foreground">Total</span>
+                    <span className="text-lg font-bold text-primary">RM{grandTotal.toFixed(2)}</span>
+                  </div>
                 </div>
 
                 <div className="flex gap-3">
@@ -302,9 +363,17 @@ const CartPage = () => {
         {/* FPX Payment Modal */}
         <FPXPaymentModal
           open={showFPX}
-          amount={total}
+          amount={grandTotal}
           orderId={`PS-${Date.now().toString(36).toUpperCase()}`}
-          onClose={() => setShowFPX(false)}
+          onClose={() => {
+            setShowFPX(false);
+            // Revert reserved status on cancel
+            items.forEach((item) => {
+              if (!item.isMock) {
+                updateListingStatus.mutate({ id: item.listing_id, status: "available" });
+              }
+            });
+          }}
           onSuccess={handlePaymentSuccess}
           onError={handlePaymentError}
         />
