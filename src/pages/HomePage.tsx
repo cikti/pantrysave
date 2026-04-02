@@ -118,12 +118,12 @@ const HomePage = () => {
               </div>
             </div>
           </header>
-          <MessageSellerModal
-            open={showMessage}
-            onClose={() => setShowMessage(false)}
-            onMessageSent={() => toast.success("Message sent to seller! ✉️")}
-          />
         )}
+        <MessageSellerModal
+          open={showMessage}
+          onClose={() => setShowMessage(false)}
+          onMessageSent={() => toast.success("Message sent to seller! ✉️")}
+        />
 
         <div className="px-4 md:px-6 pt-3 pb-1" ref={searchRef}>
           <div className="relative">
