@@ -4,6 +4,7 @@ import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUpdateListingStatus } from "@/hooks/useListings";
+import { usePoints } from "@/hooks/usePoints";
 import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,12 +21,14 @@ const CartPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const updateListingStatus = useUpdateListingStatus();
+  const { earnPoints } = usePoints();
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [deliveryChoice, setDeliveryChoice] = useState<"pickup" | "grab" | "lalamove" | null>(null);
   const [orderComplete, setOrderComplete] = useState(false);
   const [showFPX, setShowFPX] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showPointsFloat, setShowPointsFloat] = useState<number | null>(null);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -82,6 +85,7 @@ const CartPage = () => {
     setShowFPX(true);
   };
 
+
   const handlePaymentSuccess = async (_paymentUrl: string) => {
     setShowFPX(false);
     for (const item of selectedItems) {
@@ -89,6 +93,12 @@ const CartPage = () => {
         await updateListingStatus.mutateAsync({ id: item.listing_id, status: "sold" });
       }
     }
+    // Earn points: 1 point per RM1 spent (rounded)
+    const pointsEarned = Math.max(1, Math.round(selectedTotal));
+    try {
+      await earnPoints.mutateAsync({ amount: pointsEarned, description: `Purchase of ${selectedCount} item${selectedCount > 1 ? "s" : ""}` });
+      setShowPointsFloat(pointsEarned);
+    } catch {}
     // Remove only selected items from cart
     for (const item of selectedItems) {
       await removeFromCart(item.listing_id);
@@ -96,7 +106,7 @@ const CartPage = () => {
     setSelectedIds(new Set());
     setOrderComplete(true);
     toast.success("Payment successful! 🌿 Nice save for the planet!");
-    setTimeout(() => { setOrderComplete(false); navigate("/"); }, 2000);
+    setTimeout(() => { setOrderComplete(false); setShowPointsFloat(null); navigate("/"); }, 2500);
   };
 
   const handlePaymentError = (error: string) => {
@@ -364,6 +374,16 @@ const CartPage = () => {
                 <Check size={36} className="text-primary-foreground" />
               </motion.div>
               <p className="text-lg font-bold text-foreground">Order Placed! 🌿</p>
+              {showPointsFloat && (
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-sm font-bold text-primary"
+                >
+                  +{showPointsFloat} points earned! 🎉
+                </motion.p>
+              )}
               <p className="text-sm text-muted-foreground">Redirecting you home...</p>
             </motion.div>
           )}

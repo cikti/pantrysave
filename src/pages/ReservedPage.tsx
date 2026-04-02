@@ -3,6 +3,7 @@ import { ArrowLeft, MapPin, Truck, Package, Check, ExternalLink } from "lucide-r
 import { useNavigate } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePoints } from "@/hooks/usePoints";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
@@ -10,6 +11,7 @@ import PageTransition from "@/components/PageTransition";
 const ReservedPage = () => {
   const { reservations, loading, markCollected } = useReservations();
   const { user } = useAuth();
+  const { earnPoints } = usePoints();
   const navigate = useNavigate();
   const [filter, setFilter] = useState<"all" | "reserved" | "collected">("all");
 
@@ -29,8 +31,16 @@ const ReservedPage = () => {
 
   const handleCollect = async (id: string) => {
     try {
+      const reservation = reservations.find((r) => r.id === id);
       await markCollected(id);
-      toast.success("Marked as collected! 🌿");
+      // Earn points on collection
+      const points = Math.max(1, Math.round(reservation?.listing?.discount_price || 5));
+      try {
+        await earnPoints.mutateAsync({ amount: points, description: `Collected: ${reservation?.listing?.name || "item"}` });
+        toast.success(`Collected! +${points} points earned 🌿`);
+      } catch {
+        toast.success("Marked as collected! 🌿");
+      }
     } catch {
       toast.error("Failed to update status");
     }
