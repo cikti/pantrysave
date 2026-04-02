@@ -207,10 +207,18 @@ const SellPage = () => {
             </select>
           </div>
 
-          {/* Quantity / Weight */}
+          {/* Quantity / Weight / Pricing Type */}
           <QuantityWeightInput
-            value={form.weight}
-            onChange={(v) => update("weight", v)}
+            pricingType={form.pricingType}
+            onPricingTypeChange={(v) => update("pricingType", v)}
+            unitType={form.unitType}
+            onUnitTypeChange={(v) => update("unitType", v)}
+            quantity={form.quantity}
+            onQuantityChange={(v) => update("quantity", v)}
+            weightVal={form.weightVal}
+            onWeightValChange={(v) => update("weightVal", v)}
+            maxQuantity={form.maxQuantity}
+            onMaxQuantityChange={(v) => update("maxQuantity", v)}
           />
 
           {/* Condition */}
@@ -246,22 +254,46 @@ const SellPage = () => {
             onChange={(v) => update("deliveryType", v)}
           />
 
-          <div className="grid grid-cols-2 gap-3">
-            <InputField
-              label="Original Price (RM)"
-              value={form.originalPrice}
-              onChange={(v) => update("originalPrice", v)}
-              placeholder="0.00"
-              type="number"
-            />
-            <InputField
-              label="Discount Price (RM)"
-              value={form.discountPrice}
-              onChange={(v) => update("discountPrice", v)}
-              placeholder="0.00"
-              type="number"
-            />
-          </div>
+          {form.pricingType === "fixed" ? (
+            <div className="grid grid-cols-2 gap-3">
+              <InputField
+                label="Original Price (RM)"
+                value={form.originalPrice}
+                onChange={(v) => update("originalPrice", v)}
+                placeholder="0.00"
+                type="number"
+              />
+              <InputField
+                label="Discount Price (RM)"
+                value={form.discountPrice}
+                onChange={(v) => update("discountPrice", v)}
+                placeholder="0.00"
+                type="number"
+              />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <InputField
+                  label="Original Price (RM)"
+                  value={form.originalPrice}
+                  onChange={(v) => update("originalPrice", v)}
+                  placeholder="0.00"
+                  type="number"
+                />
+                <InputField
+                  label={`Price per ${form.unitType === "quantity" ? "unit" : form.unitType} (RM)`}
+                  value={form.pricePerUnit}
+                  onChange={(v) => update("pricePerUnit", v)}
+                  placeholder="0.00"
+                  type="number"
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Buyer will pay: RM{form.pricePerUnit || "0"} × amount selected
+              </p>
+            </div>
+          )}
 
           <motion.button
             type="submit"
