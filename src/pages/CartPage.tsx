@@ -1,15 +1,17 @@
+import { useState } from "react";
 import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft } from "lucide-react";
-import { useCart } from "@/contexts/CartContext";
+import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const CartPage = () => {
   const { items, count, total, loading, removeFromCart, updateQuantity, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
 
   if (!user) {
     return (
@@ -27,6 +29,30 @@ const CartPage = () => {
     await clearCart();
     toast.success("Items reserved! 🌿 Nice save for the planet!");
     navigate("/");
+  };
+
+  const handleDecrease = (item: CartItem) => {
+    if (item.quantity <= 1) {
+      setConfirmRemove(item.listing_id);
+    } else {
+      updateQuantity(item.listing_id, item.quantity - 1);
+    }
+  };
+
+  const handleIncrease = (item: CartItem) => {
+    if (item.maxQuantity && item.quantity >= item.maxQuantity) {
+      toast.error(`Maximum available is ${item.maxQuantity}`);
+      return;
+    }
+    updateQuantity(item.listing_id, item.quantity + 1);
+  };
+
+  const confirmRemoveItem = () => {
+    if (confirmRemove) {
+      removeFromCart(confirmRemove);
+      toast.success("Item removed from cart");
+      setConfirmRemove(null);
+    }
   };
 
   return (
@@ -81,14 +107,22 @@ const CartPage = () => {
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-2">
-                    <button onClick={() => updateQuantity(item.listing_id, item.quantity - 1)} className="w-7 h-7 rounded-full bg-muted flex items-center justify-center active:scale-90 transition-transform">
+                    <button onClick={() => handleDecrease(item)} className="w-7 h-7 rounded-full bg-muted flex items-center justify-center active:scale-90 transition-transform">
                       <Minus size={14} />
                     </button>
                     <span className="text-sm font-semibold w-6 text-center">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.listing_id, item.quantity + 1)} className="w-7 h-7 rounded-full bg-muted flex items-center justify-center active:scale-90 transition-transform">
+                    <button
+                      onClick={() => handleIncrease(item)}
+                      className={`w-7 h-7 rounded-full flex items-center justify-center active:scale-90 transition-transform ${
+                        item.maxQuantity && item.quantity >= item.maxQuantity ? "bg-muted/50 text-muted-foreground/40" : "bg-muted"
+                      }`}
+                    >
                       <Plus size={14} />
                     </button>
-                    <button onClick={() => removeFromCart(item.listing_id)} className="ml-auto p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                    {item.maxQuantity && (
+                      <span className="text-[10px] text-muted-foreground">max {item.maxQuantity}</span>
+                    )}
+                    <button onClick={() => setConfirmRemove(item.listing_id)} className="ml-auto p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -113,6 +147,46 @@ const CartPage = () => {
             </motion.button>
           </div>
         )}
+
+        {/* Remove confirmation dialog */}
+        <AnimatePresence>
+          {confirmRemove && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-6"
+              onClick={() => setConfirmRemove(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-card rounded-2xl p-6 max-w-xs w-full shadow-xl border border-border"
+              >
+                <p className="text-sm font-semibold text-foreground text-center">Remove this item?</p>
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  Are you sure you want to remove this from your cart?
+                </p>
+                <div className="flex gap-3 mt-5">
+                  <button
+                    onClick={() => setConfirmRemove(null)}
+                    className="flex-1 py-2.5 rounded-xl bg-muted text-sm font-medium text-foreground active:scale-95 transition-transform"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmRemoveItem}
+                    className="flex-1 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-medium active:scale-95 transition-transform"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </PageTransition>
   );
