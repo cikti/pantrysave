@@ -7,6 +7,7 @@ export interface CartItem {
   id: string;
   listing_id: string;
   quantity: number;
+  maxQuantity?: number;
   isMock?: boolean;
   listing?: {
     name: string;
