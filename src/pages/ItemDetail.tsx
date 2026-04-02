@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ShoppingCart, Info, Check, MapPin, Truck } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Info, Check, MapPin, Truck, Minus, Plus } from "lucide-react";
 import { groceryItems } from "@/data/mockData";
 import { toast } from "sonner";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -20,6 +20,8 @@ const ItemDetail = () => {
   const { addToCart } = useCart();
   const [reserved, setReserved] = useState(false);
   const [showFloat, setShowFloat] = useState(false);
+  const [qty, setQty] = useState(1);
+  const [weightAmt, setWeightAmt] = useState(0.5);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   const imageScale = useTransform(scrollY, [0, 200], [1, 1.15]);
@@ -65,6 +67,17 @@ const ItemDetail = () => {
       }
     : null;
 
+  // Detect if listing is weight-based or quantity-based
+  const isWeightBased = useMemo(() => {
+    const w = ((item?.weight) || "").toLowerCase();
+    return /\d+\s*(kg|g)\b/.test(w);
+  }, [item?.weight]);
+
+  const weightUnit = useMemo(() => {
+    const w = ((item?.weight) || "").toLowerCase();
+    return w.includes("kg") ? "kg" : "g";
+  }, [item?.weight]);
+
   if (!item) {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
@@ -76,17 +89,24 @@ const ItemDetail = () => {
   const saving = (item.originalPrice - item.discountPrice).toFixed(2);
   const discount = Math.round(((item.originalPrice - item.discountPrice) / item.originalPrice) * 100);
 
+  const subtotal = isWeightBased
+    ? item.discountPrice * weightAmt * (weightUnit === "g" ? 0.001 : 1)
+    : item.discountPrice * qty;
+
   const handleReserve = async () => {
     if (reserved) return;
+    const cartQty = isWeightBased ? 1 : qty;
+    const weightLabel = isWeightBased ? `${weightAmt} ${weightUnit}` : item.weight;
+
     if (isDbListing && dbId) {
-      await addToCart(dbId);
+      await addToCart(dbId, cartQty, undefined);
     } else if (mockItem && id) {
-      await addToCart(id, 1, {
+      await addToCart(id, cartQty, {
         name: item.name,
         image_url: item.image,
-        discount_price: item.discountPrice,
+        discount_price: isWeightBased ? subtotal : item.discountPrice,
         original_price: item.originalPrice,
-        weight: item.weight,
+        weight: weightLabel || item.weight,
       });
     }
     setReserved(true);
@@ -196,7 +216,55 @@ const ItemDetail = () => {
           </div>
         )}
 
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur-md border-t border-border z-30">
+        <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border z-30 p-4">
+          {/* Quantity / Weight selector */}
+          {!reserved && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-3">
+              {isWeightBased ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-medium text-muted-foreground">Weight:</span>
+                  <div className="flex items-center gap-1.5 bg-muted rounded-xl px-1 py-1">
+                    <button
+                      onClick={() => setWeightAmt((v) => Math.max(weightUnit === "kg" ? 0.25 : 50, weightUnit === "kg" ? +(v - 0.25).toFixed(2) : v - 50))}
+                      className="w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="text-sm font-bold text-foreground w-16 text-center">
+                      {weightUnit === "kg" ? weightAmt.toFixed(2) : weightAmt} {weightUnit}
+                    </span>
+                    <button
+                      onClick={() => setWeightAmt((v) => weightUnit === "kg" ? +(v + 0.25).toFixed(2) : v + 50)}
+                      className="w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-medium text-muted-foreground">Qty:</span>
+                  <div className="flex items-center gap-1.5 bg-muted rounded-xl px-1 py-1">
+                    <button
+                      onClick={() => setQty((v) => Math.max(1, v - 1))}
+                      className="w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="text-sm font-bold text-foreground w-8 text-center">{qty}</span>
+                    <button
+                      onClick={() => setQty((v) => v + 1)}
+                      className="w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+              <span className="text-sm font-bold text-primary">RM{subtotal.toFixed(2)}</span>
+            </motion.div>
+          )}
+
           <motion.button
             onClick={handleReserve}
             whileTap={!reserved ? { scale: 0.96 } : {}}
@@ -209,12 +277,12 @@ const ItemDetail = () => {
                 <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
                   <Check size={18} />
                 </motion.span>
-                Reserved ✓
+                Added ✓
               </>
             ) : (
               <>
                 <ShoppingCart size={18} />
-                Add to Cart & Reserve
+                Add to Cart — RM{subtotal.toFixed(2)}
               </>
             )}
           </motion.button>
