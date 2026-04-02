@@ -67,6 +67,17 @@ const ItemDetail = () => {
       }
     : null;
 
+  // Detect if listing is weight-based or quantity-based
+  const isWeightBased = useMemo(() => {
+    const w = ((item?.weight) || "").toLowerCase();
+    return /\d+\s*(kg|g)\b/.test(w);
+  }, [item?.weight]);
+
+  const weightUnit = useMemo(() => {
+    const w = ((item?.weight) || "").toLowerCase();
+    return w.includes("kg") ? "kg" : "g";
+  }, [item?.weight]);
+
   if (!item) {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
@@ -75,16 +86,8 @@ const ItemDetail = () => {
     );
   }
 
-  // Detect if listing is weight-based or quantity-based
-  const isWeightBased = useMemo(() => {
-    const w = (item.weight || "").toLowerCase();
-    return /\d+\s*(kg|g)\b/.test(w);
-  }, [item.weight]);
-
-  const weightUnit = useMemo(() => {
-    const w = (item.weight || "").toLowerCase();
-    return w.includes("kg") ? "kg" : "g";
-  }, [item.weight]);
+  const saving = (item.originalPrice - item.discountPrice).toFixed(2);
+  const discount = Math.round(((item.originalPrice - item.discountPrice) / item.originalPrice) * 100);
 
   const subtotal = isWeightBased
     ? item.discountPrice * weightAmt * (weightUnit === "g" ? 0.001 : 1)
