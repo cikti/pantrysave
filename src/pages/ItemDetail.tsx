@@ -7,7 +7,6 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import { useListings } from "@/hooks/useListings";
 import { useCart } from "@/contexts/CartContext";
-import { useReservations } from "@/hooks/useReservations";
 
 const badgeColors: Record<string, string> = {
   expiry: "bg-[hsl(var(--badge-expiry))] text-primary-foreground",
@@ -19,7 +18,6 @@ const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const { createReservation } = useReservations();
   const [reserved, setReserved] = useState(false);
   const [showFloat, setShowFloat] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -80,26 +78,21 @@ const ItemDetail = () => {
 
   const handleReserve = async () => {
     if (reserved) return;
-    // Add DB listings to cart and create reservation
     if (isDbListing && dbId) {
       await addToCart(dbId);
-      try {
-        await createReservation({
-          listing_id: dbId,
-          delivery_type: item.deliveryType || undefined,
-          delivery_service: (item as any).deliveryService || undefined,
-          address: item.address || undefined,
-          latitude: dbItem?.latitude || undefined,
-          longitude: dbItem?.longitude || undefined,
-        });
-      } catch {
-        // Duplicate reservation is fine
-      }
+    } else if (mockItem && id) {
+      await addToCart(id, 1, {
+        name: item.name,
+        image_url: item.image,
+        discount_price: item.discountPrice,
+        original_price: item.originalPrice,
+        weight: item.weight,
+      });
     }
     setReserved(true);
     setShowFloat(true);
-    toast.success(`Nice save! 🌿 ${item.name} reserved!`, {
-      description: "Good choice for the planet",
+    toast.success(`Added to cart! 🛒 ${item.name}`, {
+      description: "Good choice for the planet 🌿",
     });
     setTimeout(() => setShowFloat(false), 1200);
   };

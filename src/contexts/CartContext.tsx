@@ -7,6 +7,7 @@ export interface CartItem {
   id: string;
   listing_id: string;
   quantity: number;
+  isMock?: boolean;
   listing?: {
     name: string;
     image_url: string | null;
@@ -21,10 +22,19 @@ interface CartContextType {
   count: number;
   total: number;
   loading: boolean;
-  addToCart: (listingId: string, quantity?: number) => Promise<void>;
+  addToCart: (listingId: string, quantity?: number, mockData?: CartItem["listing"]) => Promise<void>;
   removeFromCart: (listingId: string) => Promise<void>;
   updateQuantity: (listingId: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
+}
+
+const MOCK_CART_KEY = "pantrysave_mock_cart";
+
+function getMockCart(): CartItem[] {
+  try { return JSON.parse(localStorage.getItem(MOCK_CART_KEY) || "[]"); } catch { return []; }
+}
+function saveMockCart(items: CartItem[]) {
+  localStorage.setItem(MOCK_CART_KEY, JSON.stringify(items));
 }
 
 const CartContext = createContext<CartContextType>({
@@ -42,11 +52,12 @@ export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [dbItems, setDbItems] = useState<CartItem[]>([]);
+  const [mockItems, setMockItems] = useState<CartItem[]>(getMockCart);
   const [loading, setLoading] = useState(false);
 
   const fetchCart = useCallback(async () => {
-    if (!user) { setItems([]); return; }
+    if (!user) { setDbItems([]); return; }
     setLoading(true);
     const { data } = await supabase
       .from("cart_items")
@@ -59,15 +70,35 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       quantity: row.quantity,
       listing: row.listings,
     }));
-    setItems(mapped);
+    setDbItems(mapped);
     setLoading(false);
   }, [user]);
 
   useEffect(() => { fetchCart(); }, [fetchCart]);
 
-  const addToCart = async (listingId: string, quantity = 1) => {
+  const items = [...dbItems, ...mockItems];
+
+  const addToCart = async (listingId: string, quantity = 1, mockData?: CartItem["listing"]) => {
+    // Mock item (not in DB)
+    if (mockData) {
+      setMockItems((prev) => {
+        const existing = prev.find((i) => i.listing_id === listingId);
+        let updated: CartItem[];
+        if (existing) {
+          updated = prev.map((i) => i.listing_id === listingId ? { ...i, quantity: i.quantity + quantity } : i);
+        } else {
+          updated = [...prev, { id: `mock-${listingId}`, listing_id: listingId, quantity, isMock: true, listing: mockData }];
+        }
+        saveMockCart(updated);
+        return updated;
+      });
+      toast.success("Added to cart 🛒");
+      return;
+    }
+
+    // DB item
     if (!user) { toast.error("Please log in first"); return; }
-    const existing = items.find((i) => i.listing_id === listingId);
+    const existing = dbItems.find((i) => i.listing_id === listingId);
     if (existing) {
       await updateQuantity(listingId, existing.quantity + quantity);
       return;
@@ -78,22 +109,45 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeFromCart = async (listingId: string) => {
+    // Check if mock
+    if (mockItems.find((i) => i.listing_id === listingId)) {
+      setMockItems((prev) => {
+        const updated = prev.filter((i) => i.listing_id !== listingId);
+        saveMockCart(updated);
+        return updated;
+      });
+      return;
+    }
     if (!user) return;
     await supabase.from("cart_items").delete().eq("user_id", user.id).eq("listing_id", listingId);
-    setItems((prev) => prev.filter((i) => i.listing_id !== listingId));
+    setDbItems((prev) => prev.filter((i) => i.listing_id !== listingId));
   };
 
   const updateQuantity = async (listingId: string, quantity: number) => {
-    if (!user) return;
     if (quantity < 1) { await removeFromCart(listingId); return; }
+
+    // Mock item
+    if (mockItems.find((i) => i.listing_id === listingId)) {
+      setMockItems((prev) => {
+        const updated = prev.map((i) => i.listing_id === listingId ? { ...i, quantity } : i);
+        saveMockCart(updated);
+        return updated;
+      });
+      return;
+    }
+
+    if (!user) return;
     await supabase.from("cart_items").update({ quantity }).eq("user_id", user.id).eq("listing_id", listingId);
-    setItems((prev) => prev.map((i) => i.listing_id === listingId ? { ...i, quantity } : i));
+    setDbItems((prev) => prev.map((i) => i.listing_id === listingId ? { ...i, quantity } : i));
   };
 
   const clearCart = async () => {
-    if (!user) return;
-    await supabase.from("cart_items").delete().eq("user_id", user.id);
-    setItems([]);
+    setMockItems([]);
+    saveMockCart([]);
+    if (user) {
+      await supabase.from("cart_items").delete().eq("user_id", user.id);
+      setDbItems([]);
+    }
   };
 
   const count = items.reduce((sum, i) => sum + i.quantity, 0);
