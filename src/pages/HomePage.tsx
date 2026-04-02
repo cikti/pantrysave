@@ -3,6 +3,7 @@ import { MapPin, Search } from "lucide-react";
 import { categories, groceryItems } from "@/data/mockData";
 import GroceryCard from "@/components/GroceryCard";
 import PageTransition from "@/components/PageTransition";
+import UserAvatar from "@/components/UserAvatar";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const HomePage = () => {
@@ -30,9 +31,12 @@ const HomePage = () => {
                   <span>Taman Melawati</span>
                 </button>
               </div>
-              <button className="w-9 h-9 rounded-full bg-card flex items-center justify-center shadow-sm active:scale-95 transition-transform">
-                <Search size={18} className="text-foreground" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button className="w-9 h-9 rounded-full bg-card flex items-center justify-center shadow-sm active:scale-95 transition-transform">
+                  <Search size={18} className="text-foreground" />
+                </button>
+                <UserAvatar size="sm" />
+              </div>
             </div>
           </header>
         )}

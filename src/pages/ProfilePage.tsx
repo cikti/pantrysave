@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
-import { Leaf, Wallet, ShoppingBag, TrendingUp, LogOut, Award } from "lucide-react";
+import { useState, useRef } from "react";
+import { Leaf, Wallet, ShoppingBag, TrendingUp, LogOut, Award, Camera, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useCountUp } from "@/hooks/useCountUp";
+import { useAvatar } from "@/hooks/useAvatar";
 import PageTransition from "@/components/PageTransition";
 
 const badges = [
@@ -16,6 +17,9 @@ const badges = [
 const ProfilePage = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { avatarUrl, uploadAvatar } = useAvatar();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   const moneySaved = useCountUp(124.5, 1200, 2);
   const foodSaved = useCountUp(18.2, 1000, 1);
@@ -26,6 +30,31 @@ const ProfilePage = () => {
     await signOut();
     toast.success("Logged out successfully");
     navigate("/login");
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      await uploadAvatar(file);
+      toast.success("Avatar updated! 🌿");
+    } catch {
+      toast.error("Failed to upload avatar");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const stats = [
@@ -57,7 +86,7 @@ const ProfilePage = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen pb-24">
+      <div className="min-h-screen pb-24 md:pb-8">
         <header className="px-5 pt-8 pb-4 flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold text-foreground">
@@ -75,15 +104,35 @@ const ProfilePage = () => {
           </button>
         </header>
 
-        {/* Avatar area */}
+        {/* Avatar area with upload */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4 }}
           className="flex flex-col items-center py-6"
         >
-          <div className="w-20 h-20 rounded-full bg-primary/15 flex items-center justify-center">
-            <Leaf size={32} className="text-primary" />
+          <div className="relative">
+            <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-border shadow-sm bg-muted flex items-center justify-center">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <User size={32} className="text-muted-foreground" />
+              )}
+            </div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md active:scale-90 transition-transform"
+            >
+              <Camera size={14} />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
           </div>
           <h2 className="text-base font-semibold text-foreground mt-3">
             {user?.user_metadata?.name || "Pantry Hero"}
@@ -91,6 +140,9 @@ const ProfilePage = () => {
           <p className="text-xs text-muted-foreground">
             {user?.email}
           </p>
+          {uploading && (
+            <p className="text-[10px] text-primary mt-1 animate-pulse">Uploading...</p>
+          )}
         </motion.div>
 
         {/* Stats grid */}
