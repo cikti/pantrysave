@@ -372,12 +372,17 @@ const ItemDetail = () => {
 
           <motion.button
             onClick={handleReserve}
-            whileTap={!reserved ? { scale: 0.96 } : {}}
+            disabled={isSold}
+            whileTap={!reserved && !isSold ? { scale: 0.96 } : {}}
             className={`w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-colors duration-300 ${
-              reserved ? "bg-accent text-primary" : "bg-primary text-primary-foreground"
+              isSold
+                ? "bg-muted text-muted-foreground cursor-not-allowed"
+                : reserved ? "bg-accent text-primary" : "bg-primary text-primary-foreground"
             }`}
           >
-            {reserved ? (
+            {isSold ? (
+              "Sold Out"
+            ) : reserved ? (
               <>
                 <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
                   <Check size={18} />
