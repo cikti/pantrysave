@@ -101,6 +101,13 @@ const ProfilePage = () => {
           >
             My Listings
           </button>
+          <button
+            onClick={() => navigate("/reserved")}
+            className="flex-1 text-xs font-medium py-2.5 rounded-xl transition-all bg-card text-muted-foreground flex items-center justify-center gap-1"
+          >
+            <Package size={12} />
+            Reserved
+          </button>
         </div>
 
         {activeTab === "impact" ? (

@@ -18,6 +18,7 @@ const navItems = [
   { title: "Map View", url: "/map", icon: MapPin },
   { title: "Sell / List", url: "/sell", icon: PlusCircle },
   { title: "Cart", url: "/cart", icon: ShoppingCart },
+  { title: "Reserved", url: "/reserved", icon: Package },
 ];
 
 export function AppSidebar() {
