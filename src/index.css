@@ -6,57 +6,57 @@
 
 @layer base {
   :root {
-    /* Warm cream base — no pure whites */
-    --background: 38 35% 92%;
-    --foreground: 80 12% 22%;
+    /* Clean, modern, fresh palette */
+    --background: 210 20% 96%;
+    --foreground: 220 15% 20%;
 
-    --card: 37 30% 89%;
-    --card-foreground: 80 12% 22%;
+    --card: 0 0% 99%;
+    --card-foreground: 220 15% 20%;
 
-    --popover: 37 30% 89%;
-    --popover-foreground: 80 12% 22%;
+    --popover: 0 0% 99%;
+    --popover-foreground: 220 15% 20%;
 
-    --primary: 82 35% 35%;
-    --primary-foreground: 38 35% 92%;
+    --primary: 152 55% 42%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 35 25% 85%;
-    --secondary-foreground: 80 12% 22%;
+    --secondary: 210 18% 93%;
+    --secondary-foreground: 220 15% 20%;
 
-    --muted: 36 22% 86%;
-    --muted-foreground: 80 10% 46%;
+    --muted: 210 14% 93%;
+    --muted-foreground: 220 10% 50%;
 
-    --accent: 82 22% 84%;
-    --accent-foreground: 82 35% 25%;
+    --accent: 38 90% 56%;
+    --accent-foreground: 30 60% 18%;
 
-    --destructive: 0 60% 48%;
-    --destructive-foreground: 38 35% 92%;
+    --destructive: 0 65% 52%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 36 18% 82%;
-    --input: 36 18% 82%;
-    --ring: 82 35% 35%;
+    --border: 210 14% 90%;
+    --input: 210 14% 90%;
+    --ring: 152 55% 42%;
 
     --radius: 1rem;
 
-    --olive: 82 35% 35%;
-    --olive-light: 82 22% 84%;
-    --olive-dark: 82 35% 25%;
-    --cream: 38 35% 92%;
-    --oat: 35 25% 85%;
-    --charcoal: 80 12% 22%;
-    --charcoal-light: 80 10% 46%;
-    --warm-white: 37 30% 89%;
-    --badge-expiry: 25 70% 48%;
-    --badge-imperfect: 82 35% 35%;
-    --badge-overstock: 210 45% 48%;
+    --olive: 152 55% 42%;
+    --olive-light: 152 35% 92%;
+    --olive-dark: 152 55% 30%;
+    --cream: 210 20% 96%;
+    --oat: 210 18% 93%;
+    --charcoal: 220 15% 20%;
+    --charcoal-light: 220 10% 50%;
+    --warm-white: 0 0% 99%;
+    --badge-expiry: 24 85% 52%;
+    --badge-imperfect: 152 55% 42%;
+    --badge-overstock: 215 65% 52%;
 
-    --sidebar-background: 36 22% 86%;
-    --sidebar-foreground: 80 12% 22%;
-    --sidebar-primary: 82 35% 25%;
-    --sidebar-primary-foreground: 38 35% 92%;
-    --sidebar-accent: 82 22% 84%;
-    --sidebar-accent-foreground: 82 35% 25%;
-    --sidebar-border: 36 18% 82%;
-    --sidebar-ring: 82 35% 35%;
+    --sidebar-background: 210 18% 93%;
+    --sidebar-foreground: 220 15% 20%;
+    --sidebar-primary: 152 55% 30%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 152 35% 92%;
+    --sidebar-accent-foreground: 152 55% 30%;
+    --sidebar-border: 210 14% 90%;
+    --sidebar-ring: 152 55% 42%;
   }
 }
 
