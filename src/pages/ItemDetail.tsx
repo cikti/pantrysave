@@ -17,6 +17,7 @@ const badgeColors: Record<string, string> = {
 const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addToCart } = useCart();
   const [reserved, setReserved] = useState(false);
   const [showFloat, setShowFloat] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
