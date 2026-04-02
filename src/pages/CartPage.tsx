@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
+import FPXPaymentModal from "@/components/FPXPaymentModal";
 
 const CartPage = () => {
   const { items, count, total, loading, removeFromCart, updateQuantity, clearCart } = useCart();
