@@ -26,7 +26,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             {children}
           </main>
         </div>
-        <ChatBox sellerName="Local Seller" />
+        
       </div>
     </SidebarProvider>
   );
