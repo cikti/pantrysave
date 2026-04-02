@@ -20,6 +20,10 @@ export type Listing = {
   status: "available" | "reserved" | "sold";
   reason: string | null;
   expiry_days: number | null;
+  pricing_type: string;
+  price_per_unit: number | null;
+  unit_type: string;
+  max_quantity: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -39,6 +43,10 @@ export type CreateListingInput = {
   delivery_service?: string;
   reason?: string;
   expiry_days?: number;
+  pricing_type?: string;
+  price_per_unit?: number;
+  unit_type?: string;
+  max_quantity?: number;
 };
 
 export function useListings() {
