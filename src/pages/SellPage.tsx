@@ -36,6 +36,12 @@ const SellPage = () => {
     longitude: null as number | null,
     address: "",
     reason: "",
+    pricingType: "fixed" as "fixed" | "flexible",
+    unitType: "quantity" as "kg" | "g" | "quantity",
+    quantity: 1,
+    weightVal: "",
+    maxQuantity: "1",
+    pricePerUnit: "",
   });
 
   const update = (key: string, val: any) =>
