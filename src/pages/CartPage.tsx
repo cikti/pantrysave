@@ -21,7 +21,7 @@ const CartPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const updateListingStatus = useUpdateListingStatus();
-  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const { earnPoints } = usePoints();
   const [showCheckout, setShowCheckout] = useState(false);
   const [deliveryChoice, setDeliveryChoice] = useState<"pickup" | "grab" | "lalamove" | null>(null);
   const [orderComplete, setOrderComplete] = useState(false);
