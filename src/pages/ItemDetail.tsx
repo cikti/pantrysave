@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ShoppingCart, Info, Check, MapPin, Truck } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Info, Check, MapPin, Truck, Minus, Plus } from "lucide-react";
 import { groceryItems } from "@/data/mockData";
 import { toast } from "sonner";
 import { motion, useScroll, useTransform } from "framer-motion";
