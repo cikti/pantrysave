@@ -34,8 +34,8 @@ const BottomNav = () => {
               <div className="relative">
                 <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
                 {label === "Cart" && cartCount > 0 && (
-                  <span className="absolute -top-1 -right-2 w-4 h-4 bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center">
-                    {cartCount > 9 ? "9+" : cartCount}
+                  <span className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] bg-primary text-primary-foreground text-[11px] font-bold rounded-full flex items-center justify-center px-1">
+                    {cartCount > 99 ? "99+" : cartCount}
                   </span>
                 )}
               </div>

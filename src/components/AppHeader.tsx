@@ -38,8 +38,8 @@ const AppHeader = () => {
         >
           <ShoppingCart size={18} className="text-foreground" />
           {count > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
-              {count > 9 ? "9+" : count}
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-primary text-primary-foreground text-[11px] font-bold rounded-full flex items-center justify-center px-1">
+              {count > 99 ? "99+" : count}
             </span>
           )}
         </button>
