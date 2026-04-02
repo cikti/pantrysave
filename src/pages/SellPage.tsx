@@ -85,13 +85,28 @@ const SellPage = () => {
       const deliveryType = form.deliveryType === "pickup" ? "pickup" : "third_party";
       const deliveryService = form.deliveryType !== "pickup" ? form.deliveryType : undefined;
 
+      // Build weight string for display
+      const weightStr = form.pricingType === "fixed"
+        ? `${form.quantity} pcs`
+        : form.unitType === "quantity"
+          ? `${form.maxQuantity} pcs`
+          : `${form.weightVal} ${form.unitType}`;
+
+      const discountPrice = form.pricingType === "fixed"
+        ? parseFloat(form.discountPrice)
+        : parseFloat(form.pricePerUnit);
+
+      const maxQty = form.pricingType === "flexible"
+        ? (form.unitType === "quantity" ? parseFloat(form.maxQuantity) : parseFloat(form.weightVal))
+        : form.quantity;
+
       await createListing.mutateAsync({
         name: form.name,
         category: form.category || undefined,
         condition: form.condition || undefined,
-        weight: form.weight || undefined,
+        weight: weightStr || undefined,
         original_price: parseFloat(form.originalPrice),
-        discount_price: parseFloat(form.discountPrice),
+        discount_price: discountPrice,
         image_url,
         latitude: form.latitude ?? undefined,
         longitude: form.longitude ?? undefined,
@@ -100,6 +115,10 @@ const SellPage = () => {
         delivery_service: deliveryService,
         reason: form.reason || `${form.condition || "Discounted"} — perfectly good to use.`,
         expiry_days: form.condition === "Near Expiry" ? form.expiryDays : undefined,
+        pricing_type: form.pricingType,
+        price_per_unit: form.pricingType === "flexible" ? parseFloat(form.pricePerUnit) : undefined,
+        unit_type: form.pricingType === "flexible" ? form.unitType : "quantity",
+        max_quantity: maxQty || undefined,
       });
 
       toast.success("You rescued this item! 🌿", {
