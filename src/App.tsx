@@ -9,6 +9,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import ItemDetail from "./pages/ItemDetail";
 import CartPage from "./pages/CartPage";
+import ReservedPage from "./pages/ReservedPage";
 import SellPage from "./pages/SellPage";
 import ProfilePage from "./pages/ProfilePage";
 import MapPage from "./pages/MapPage";
