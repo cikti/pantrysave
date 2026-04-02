@@ -23,7 +23,7 @@ interface CartContextType {
   count: number;
   total: number;
   loading: boolean;
-  addToCart: (listingId: string, quantity?: number, mockData?: CartItem["listing"]) => Promise<void>;
+  addToCart: (listingId: string, quantity?: number, mockData?: CartItem["listing"], maxQuantity?: number) => Promise<void>;
   removeFromCart: (listingId: string) => Promise<void>;
   updateQuantity: (listingId: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
