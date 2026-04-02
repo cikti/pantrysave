@@ -1,4 +1,4 @@
-import { ShoppingBag, MapPin, PlusCircle } from "lucide-react";
+import { ShoppingBag, MapPin, PlusCircle, ShoppingCart } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
