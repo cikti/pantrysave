@@ -47,6 +47,7 @@ const FPXPaymentModal = ({
   const [selectedBank, setSelectedBank] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSellerMessage, setShowSellerMessage] = useState(false);
 
   const handlePay = async () => {
     if (!selectedBank) {
