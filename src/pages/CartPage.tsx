@@ -4,6 +4,7 @@ import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUpdateListingStatus } from "@/hooks/useListings";
+import { usePoints } from "@/hooks/usePoints";
 import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
