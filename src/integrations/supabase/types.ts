@@ -20,8 +20,10 @@ export type Database = {
           category: string | null
           condition: string | null
           created_at: string
+          delivery_service: string | null
           delivery_type: Database["public"]["Enums"]["delivery_type"]
           discount_price: number
+          expiry_days: number | null
           id: string
           image_url: string | null
           latitude: number | null
@@ -39,8 +41,10 @@ export type Database = {
           category?: string | null
           condition?: string | null
           created_at?: string
+          delivery_service?: string | null
           delivery_type?: Database["public"]["Enums"]["delivery_type"]
           discount_price: number
+          expiry_days?: number | null
           id?: string
           image_url?: string | null
           latitude?: number | null
@@ -58,8 +62,10 @@ export type Database = {
           category?: string | null
           condition?: string | null
           created_at?: string
+          delivery_service?: string | null
           delivery_type?: Database["public"]["Enums"]["delivery_type"]
           discount_price?: number
+          expiry_days?: number | null
           id?: string
           image_url?: string | null
           latitude?: number | null
