@@ -134,9 +134,9 @@ const SellPage = () => {
 
   const filledFields = [
     imagePreview,
-    form.name && form.category && form.weight && form.condition,
+    form.name && form.category && form.condition,
     form.latitude && form.longitude,
-    form.originalPrice && form.discountPrice,
+    form.originalPrice && (form.pricingType === "fixed" ? form.discountPrice : form.pricePerUnit),
   ];
   const activeStep = filledFields.filter(Boolean).length;
 
