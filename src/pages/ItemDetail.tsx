@@ -5,7 +5,7 @@ import { groceryItems } from "@/data/mockData";
 import { toast } from "sonner";
 import { motion, useScroll, useTransform } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
-import { useListings } from "@/hooks/useListings";
+import { useListings, useListingById } from "@/hooks/useListings";
 import { useCart } from "@/contexts/CartContext";
 import { useChat } from "@/contexts/ChatContext";
 import { useAuth } from "@/contexts/AuthContext";
