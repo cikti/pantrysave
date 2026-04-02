@@ -428,11 +428,6 @@ const CartPage = () => {
           orderId={`PS-${Date.now().toString(36).toUpperCase()}`}
           onClose={() => {
             setShowFPX(false);
-            selectedItems.forEach((item) => {
-              if (!item.isMock) {
-                updateListingStatus.mutate({ id: item.listing_id, status: "available" });
-              }
-            });
           }}
           onSuccess={handlePaymentSuccess}
           onError={handlePaymentError}
