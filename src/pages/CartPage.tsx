@@ -34,13 +34,22 @@ const CartPage = () => {
     setShowCheckout(true);
   };
 
-  const handleConfirmOrder = async () => {
+  const handleConfirmOrder = () => {
     if (!deliveryChoice) { toast.error("Please select a delivery option"); return; }
-    await clearCart();
     setShowCheckout(false);
+    setShowFPX(true);
+  };
+
+  const handlePaymentSuccess = async (_paymentUrl: string) => {
+    setShowFPX(false);
+    await clearCart();
     setOrderComplete(true);
-    toast.success("Order placed! 🌿 Nice save for the planet!");
+    toast.success("Payment successful! 🌿 Nice save for the planet!");
     setTimeout(() => { setOrderComplete(false); navigate("/"); }, 2000);
+  };
+
+  const handlePaymentError = (error: string) => {
+    toast.error(error);
   };
 
   const handleDecrease = (item: CartItem) => {
