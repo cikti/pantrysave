@@ -31,7 +31,14 @@ const BottomNav = () => {
                   : "text-charcoal-light"
               }`}
             >
-              <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+              <div className="relative">
+                <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+                {label === "Cart" && cartCount > 0 && (
+                  <span className="absolute -top-1 -right-2 w-4 h-4 bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center">
+                    {cartCount > 9 ? "9+" : cartCount}
+                  </span>
+                )}
+              </div>
               <span className="text-[10px] font-medium">{label}</span>
               {active && (
                 <motion.div
