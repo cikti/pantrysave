@@ -20,7 +20,6 @@ const CartPage = () => {
   const { items, count, total, loading, removeFromCart, updateQuantity, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const updateListingStatus = useUpdateListingStatus();
   const purchaseListing = usePurchaseListing();
   const { earnPoints } = usePoints();
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
