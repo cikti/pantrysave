@@ -1,7 +1,8 @@
 import { type GroceryItem } from "@/data/mockData";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Store } from "lucide-react";
+import { Store, ShoppingCart } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
 
 const badgeColors: Record<string, string> = {
   expiry: "bg-[hsl(var(--badge-expiry))] text-primary-foreground",
@@ -11,7 +12,12 @@ const badgeColors: Record<string, string> = {
 
 const GroceryCard = ({ item, index = 0 }: { item: GroceryItem; index?: number }) => {
   const navigate = useNavigate();
+  const { items: cartItems } = useCart();
   const saving = (item.originalPrice - item.clearancePrice).toFixed(2);
+
+  // Check if item is already in user's cart
+  const rawId = item.id.startsWith("db-") ? item.id.replace("db-", "") : item.id;
+  const isInCart = cartItems.some((ci) => ci.listing_id === rawId);
 
   return (
     <motion.button
@@ -21,7 +27,7 @@ const GroceryCard = ({ item, index = 0 }: { item: GroceryItem; index?: number })
       transition={{ duration: 0.3, delay: index * 0.06, ease: "easeOut" }}
       whileTap={{ scale: 0.97 }}
       whileHover={{ y: -4, boxShadow: "0 8px 24px -8px hsl(var(--primary) / 0.15)" }}
-      className="flex flex-col bg-card rounded-2xl overflow-hidden shadow-sm text-left tap-highlight"
+      className="flex flex-col bg-card rounded-2xl overflow-hidden shadow-sm text-left tap-highlight relative"
     >
       <div className="relative aspect-square overflow-hidden">
         <img
@@ -39,6 +45,11 @@ const GroceryCard = ({ item, index = 0 }: { item: GroceryItem; index?: number })
         >
           {item.badge}
         </span>
+        {isInCart && (
+          <span className="absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[hsl(35,92%,50%)] text-white flex items-center gap-1">
+            <ShoppingCart size={10} /> In Cart
+          </span>
+        )}
       </div>
       <div className="p-3 flex flex-col gap-1">
         <div className="flex items-center gap-1 text-muted-foreground">
