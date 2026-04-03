@@ -13,6 +13,8 @@ export interface Voucher {
   times_used: number;
   expires_at: string | null;
   is_active: boolean;
+  voucher_type: "claimable" | "system";
+  points_cost: number;
 }
 
 export interface UserVoucher {
@@ -31,6 +33,21 @@ export function useVouchers() {
         .from("vouchers")
         .select("*")
         .eq("is_active", true);
+      if (error) throw error;
+      return (data || []) as Voucher[];
+    },
+  });
+}
+
+export function useClaimableVouchers() {
+  return useQuery({
+    queryKey: ["vouchers", "claimable"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vouchers")
+        .select("*")
+        .eq("is_active", true)
+        .eq("voucher_type", "claimable");
       if (error) throw error;
       return (data || []) as Voucher[];
     },
@@ -67,6 +84,45 @@ export function useClaimVoucher() {
         .from("user_vouchers")
         .insert({ user_id: user.id, voucher_id: voucherId });
       if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["user_vouchers"] }),
+  });
+}
+
+export function useRedeemVoucherCode() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (code: string) => {
+      if (!user) throw new Error("Not logged in");
+      // Find voucher by code
+      const { data: voucher, error: findErr } = await supabase
+        .from("vouchers")
+        .select("*")
+        .eq("code", code.toUpperCase().trim())
+        .eq("is_active", true)
+        .eq("voucher_type", "system")
+        .maybeSingle();
+      if (findErr) throw findErr;
+      if (!voucher) throw new Error("Invalid voucher code");
+      // Check if already claimed
+      const { data: existing } = await supabase
+        .from("user_vouchers")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("voucher_id", voucher.id)
+        .maybeSingle();
+      if (existing) throw new Error("You already have this voucher");
+      // Check expiry
+      if (voucher.expires_at && new Date(voucher.expires_at) < new Date()) {
+        throw new Error("This voucher has expired");
+      }
+      // Claim it
+      const { error } = await supabase
+        .from("user_vouchers")
+        .insert({ user_id: user.id, voucher_id: voucher.id });
+      if (error) throw error;
+      return voucher as Voucher;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["user_vouchers"] }),
   });

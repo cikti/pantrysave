@@ -7,7 +7,7 @@ import { usePurchaseListing } from "@/hooks/useListings";
 import { supabase } from "@/integrations/supabase/client";
 import { usePoints } from "@/hooks/usePoints";
 import { useOrders } from "@/contexts/OrderContext";
-import { useVouchers, useUserVouchers, useClaimVoucher, useMarkVoucherUsed, calculateDiscount, Voucher } from "@/hooks/useVouchers";
+import { useUserVouchers, useMarkVoucherUsed, calculateDiscount } from "@/hooks/useVouchers";
 import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
@@ -35,9 +35,7 @@ const CartPage = () => {
   const [showPointsFloat, setShowPointsFloat] = useState<number | null>(null);
 
   // Voucher state
-  const { data: allVouchers } = useVouchers();
   const { data: userVouchers } = useUserVouchers();
-  const claimVoucher = useClaimVoucher();
   const markVoucherUsed = useMarkVoucherUsed();
   const [selectedVoucherId, setSelectedVoucherId] = useState<string | null>(null);
   const [showVouchers, setShowVouchers] = useState(false);
@@ -73,14 +71,10 @@ const CartPage = () => {
   // Voucher discount
   const selectedVoucher = useMemo(() => {
     if (!selectedVoucherId) return null;
-    // Check user vouchers first
     const uv = userVouchers?.find((v) => v.id === selectedVoucherId);
     if (uv?.voucher) return { userVoucherId: uv.id, voucher: uv.voucher };
-    // Check all vouchers (unclaimed)
-    const av = allVouchers?.find((v) => v.id === selectedVoucherId);
-    if (av) return { userVoucherId: null, voucher: av };
     return null;
-  }, [selectedVoucherId, userVouchers, allVouchers]);
+  }, [selectedVoucherId, userVouchers]);
 
   const voucherDiscount = useMemo(() => {
     if (!selectedVoucher) return 0;
@@ -397,31 +391,8 @@ const CartPage = () => {
                         );
                       })}
 
-                      {/* Unclaimed vouchers */}
-                      {allVouchers?.filter((v) => !userVouchers?.some((uv) => uv.voucher_id === v.id)).map((v) => (
-                        <div key={v.id} className="flex items-center justify-between p-3 rounded-lg border-2 border-dashed border-border bg-muted/30">
-                          <div>
-                            <span className="text-sm font-medium text-foreground">{v.name}</span>
-                            {v.min_spend > 0 && (
-                              <p className="text-[11px] text-muted-foreground">Min spend RM{v.min_spend.toFixed(2)}</p>
-                            )}
-                          </div>
-                          <button
-                            onClick={async () => {
-                              try {
-                                await claimVoucher.mutateAsync(v.id);
-                                toast.success(`Voucher "${v.name}" claimed!`);
-                              } catch { toast.error("Failed to claim voucher"); }
-                            }}
-                            className="text-xs font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors"
-                          >
-                            Claim
-                          </button>
-                        </div>
-                      ))}
-
-                      {(!allVouchers?.length && !userVouchers?.length) && (
-                        <p className="text-xs text-muted-foreground text-center py-3">No vouchers available</p>
+                      {(!userVouchers?.length) && (
+                        <p className="text-xs text-muted-foreground text-center py-3">No vouchers available. Claim vouchers from the Points page!</p>
                       )}
                     </div>
                   </motion.div>
