@@ -117,6 +117,14 @@ const CartPage = () => {
         await purchaseListing.mutateAsync({ id: item.listing_id, quantity: item.quantity });
       }
     }
+    // Mark items as permanently purchased
+    markPurchased(selectedItems.map((i) => i.listing_id));
+
+    // Mark voucher as used
+    if (selectedVoucher?.userVoucherId) {
+      try { await markVoucherUsed.mutateAsync(selectedVoucher.userVoucherId); } catch {}
+    }
+
     // Create order
     const deliveryLabel = deliveryChoice ? DELIVERY_FEES[deliveryChoice].label : "Self Pickup";
     const sellerNames = [...new Set(selectedItems.map((i) => i.listing?.name || "Seller"))];
@@ -145,6 +153,7 @@ const CartPage = () => {
       await removeFromCart(item.listing_id);
     }
     setSelectedIds(new Set());
+    setSelectedVoucherId(null);
     setOrderComplete(true);
     toast.success("Payment successful! 🌿 Nice save for the planet!");
     setTimeout(() => { setOrderComplete(false); setShowPointsFloat(null); navigate("/orders"); }, 2500);
