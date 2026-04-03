@@ -402,7 +402,7 @@ const CartPage = () => {
           )}
 
         {items.length > 0 && !showCheckout && (
-          <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border p-4 z-30">
+          <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border p-4 z-30 px-[16px] py-[8px]">
             <div className="flex justify-between items-center mb-1">
               <span className="text-xs text-muted-foreground">Subtotal ({selectedCount} selected)</span>
               <span className="text-sm font-medium text-foreground">RM{selectedTotal.toFixed(2)}</span>
