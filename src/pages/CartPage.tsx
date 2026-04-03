@@ -116,6 +116,80 @@ const CartPage = () => {
     setShowFPX(true);
   };
 
+  // Get buyer location for distance alerts
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setBuyerPos([pos.coords.latitude, pos.coords.longitude]),
+        () => {}
+      );
+    }
+  }, []);
+
+  function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  // Get available delivery options from selected items' listings
+  const availableDeliveryOptions = useMemo(() => {
+    // Collect all delivery options from selected items
+    const allOptions = new Map<string, { key: string; label: string; fee: number; estimatedTime: string }>();
+    
+    for (const item of selectedItems) {
+      const listing = item.listing as any;
+      const opts = listing?.delivery_options;
+      if (Array.isArray(opts) && opts.length > 0) {
+        for (const opt of opts) {
+          if (!allOptions.has(opt.key)) {
+            allOptions.set(opt.key, opt);
+          }
+        }
+      } else {
+        // Fallback: use legacy delivery_type field
+        const dt = listing?.delivery_type;
+        if (dt === "pickup" || !dt) {
+          allOptions.set("pickup", { key: "pickup", label: "Self Pickup", fee: 0, estimatedTime: "Ready in 1 hour" });
+        }
+        if (dt === "third_party") {
+          const svc = listing?.delivery_service || "grab";
+          allOptions.set(svc, { key: svc, label: DELIVERY_FEES[svc]?.label || svc, fee: listing?.delivery_fee || DELIVERY_FEES[svc]?.fee || 6, estimatedTime: svc === "grab" ? "1-2 hours" : "1-3 hours" });
+        }
+      }
+    }
+    
+    // If no options found, show all defaults
+    if (allOptions.size === 0) {
+      return [
+        { key: "pickup", label: "Self Pickup", fee: 0, estimatedTime: "Ready in 1 hour" },
+        { key: "grab", label: "GrabExpress", fee: 8, estimatedTime: "1-2 hours" },
+        { key: "lalamove", label: "Lalamove", fee: 6, estimatedTime: "1-3 hours" },
+      ];
+    }
+    
+    return [...allOptions.values()];
+  }, [selectedItems]);
+
+  // Distance alert for pickup
+  const distanceInfo = useMemo(() => {
+    if (!buyerPos || deliveryChoice !== "pickup") return null;
+    // Find closest seller location
+    let minDist = Infinity;
+    for (const item of selectedItems) {
+      const lat = (item.listing as any)?.latitude;
+      const lng = (item.listing as any)?.longitude;
+      if (lat && lng) {
+        const d = haversineKm(buyerPos[0], buyerPos[1], lat, lng);
+        if (d < minDist) minDist = d;
+      }
+    }
+    if (minDist === Infinity) return null;
+    return { distance: minDist };
+  }, [buyerPos, deliveryChoice, selectedItems]);
+
 
   const handlePaymentSuccess = async (_paymentUrl: string) => {
     setShowFPX(false);
