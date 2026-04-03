@@ -26,7 +26,7 @@ const TIMELINE_LABELS: { status: OrderStatus; label: string }[] = [
 ];
 
 const MyOrdersPage = () => {
-  const { orders, cancelOrder } = useOrders();
+  const { orders } = useOrders();
   const navigate = useNavigate();
   const [trackingOrder, setTrackingOrder] = useState<Order | null>(null);
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
