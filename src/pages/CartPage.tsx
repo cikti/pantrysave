@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePurchaseListing } from "@/hooks/useListings";
 import { usePoints } from "@/hooks/usePoints";
+import { useOrders } from "@/contexts/OrderContext";
 import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
