@@ -24,7 +24,7 @@ const CartPage = () => {
   const navigate = useNavigate();
   const purchaseListing = usePurchaseListing();
   const { earnPoints } = usePoints();
-  const { addOrder } = useOrders();
+  const { addOrder, markPurchased } = useOrders();
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [deliveryChoice, setDeliveryChoice] = useState<"pickup" | "grab" | "lalamove" | null>(null);
@@ -32,6 +32,14 @@ const CartPage = () => {
   const [showFPX, setShowFPX] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showPointsFloat, setShowPointsFloat] = useState<number | null>(null);
+
+  // Voucher state
+  const { data: allVouchers } = useVouchers();
+  const { data: userVouchers } = useUserVouchers();
+  const claimVoucher = useClaimVoucher();
+  const markVoucherUsed = useMarkVoucherUsed();
+  const [selectedVoucherId, setSelectedVoucherId] = useState<string | null>(null);
+  const [showVouchers, setShowVouchers] = useState(false);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
