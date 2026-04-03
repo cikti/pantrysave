@@ -1,6 +1,6 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ShoppingCart, Info, Check, MapPin, Truck, Minus, Plus, MessageCircle } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Info, Check, MapPin, Truck, MessageCircle } from "lucide-react";
 import { groceryItems } from "@/data/mockData";
 import { toast } from "sonner";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -25,8 +25,6 @@ const ItemDetail = () => {
   const { user } = useAuth();
   const [reserved, setReserved] = useState(false);
   const [showFloat, setShowFloat] = useState(false);
-  const [qty, setQty] = useState(1);
-  const [weightAmt, setWeightAmt] = useState(0.5);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   const imageScale = useTransform(scrollY, [0, 200], [1, 1.15]);
@@ -35,13 +33,11 @@ const ItemDetail = () => {
 
   const isDbListing = id?.startsWith("db-");
   const dbId = isDbListing ? id.replace("db-", "") : null;
-  // Use useListingById for direct links (fetches any status), fall back to listing from useListings
   const { data: directDbItem } = useListingById(dbId ?? undefined);
   const dbItem = directDbItem || dbListings?.find((l) => l.id === dbId);
   const mockItem = !isDbListing ? groceryItems.find((i) => i.id === id) : null;
 
   const isSold = dbItem?.status === "sold";
-  const stockLeft = dbItem?.stock_quantity ?? null;
 
   // Normalize item data
   const item = mockItem
@@ -63,6 +59,7 @@ const ItemDetail = () => {
         pricePerUnit: null as number | null,
         unitType: "quantity" as string,
         maxQuantity: null as number | null,
+        stockQuantity: null as number | null,
       }
     : dbItem
     ? {
@@ -82,19 +79,10 @@ const ItemDetail = () => {
         pricingType: dbItem.pricing_type || "fixed",
         pricePerUnit: dbItem.price_per_unit ? Number(dbItem.price_per_unit) : null,
         unitType: dbItem.unit_type || "quantity",
-        maxQuantity: stockLeft !== null ? stockLeft : (dbItem.max_quantity ? Number(dbItem.max_quantity) : null),
+        maxQuantity: dbItem.max_quantity ? Number(dbItem.max_quantity) : null,
+        stockQuantity: dbItem.stock_quantity ?? null,
       }
     : null;
-
-  const isFixed = item?.pricingType === "fixed";
-  const isFlexible = item?.pricingType === "flexible";
-
-  const isWeightUnit = item?.unitType === "kg" || item?.unitType === "g";
-  const weightUnit = item?.unitType === "g" ? "g" : "kg";
-  const maxAmount = item?.maxQuantity ?? undefined;
-
-  // Show stock availability for all items
-  const stockDisplay = stockLeft !== null ? stockLeft : (item?.maxQuantity ?? null);
 
   if (!item) {
     return (
@@ -107,66 +95,24 @@ const ItemDetail = () => {
   const saving = (item.originalPrice - item.discountPrice).toFixed(2);
   const discount = Math.round(((item.originalPrice - item.discountPrice) / item.originalPrice) * 100);
 
-  // Calculate subtotal
-  let subtotal: number;
-  if (isFixed) {
-    subtotal = item.discountPrice * qty;
-  } else if (isFlexible && isWeightUnit) {
-    const perUnit = item.pricePerUnit ?? item.discountPrice;
-    subtotal = perUnit * weightAmt * (weightUnit === "g" ? 0.001 : 1);
-  } else {
-    // flexible quantity
-    const perUnit = item.pricePerUnit ?? item.discountPrice;
-    subtotal = perUnit * qty;
-  }
-
   // Price display label
-  const priceLabel = isFlexible && item.pricePerUnit
+  const priceLabel = item.pricingType === "flexible" && item.pricePerUnit
     ? `RM${item.pricePerUnit.toFixed(2)} / ${item.unitType === "quantity" ? "unit" : item.unitType}`
     : null;
 
   const handleReserve = async () => {
     if (reserved) return;
 
-    if (isFixed) {
-      // Fixed item — add with selected qty
-      if (isDbListing && dbId) {
-        await addToCart(dbId, qty, undefined, maxAmount);
-      } else if (mockItem && id) {
-        await addToCart(id, qty, {
-          name: item.name,
-          image_url: item.image,
-          discount_price: item.discountPrice,
-          original_price: item.originalPrice,
-          weight: item.weight,
-        }, maxAmount);
-      }
-    } else if (isFlexible && isWeightUnit) {
-      // Flexible weight — store subtotal as price, 1 qty
-      if (isDbListing && dbId) {
-        await addToCart(dbId, 1, undefined, 1);
-      } else if (mockItem && id) {
-        await addToCart(id, 1, {
-          name: item.name,
-          image_url: item.image,
-          discount_price: subtotal,
-          original_price: item.originalPrice,
-          weight: `${weightAmt} ${weightUnit}`,
-        }, 1);
-      }
-    } else {
-      // Flexible quantity
-      if (isDbListing && dbId) {
-        await addToCart(dbId, qty, undefined, maxAmount);
-      } else if (mockItem && id) {
-        await addToCart(id, qty, {
-          name: item.name,
-          image_url: item.image,
-          discount_price: item.pricePerUnit ?? item.discountPrice,
-          original_price: item.originalPrice,
-          weight: item.weight,
-        }, maxAmount);
-      }
+    if (isDbListing && dbId) {
+      await addToCart(dbId, 1, undefined, 1);
+    } else if (mockItem && id) {
+      await addToCart(id, 1, {
+        name: item.name,
+        image_url: item.image,
+        discount_price: item.discountPrice,
+        original_price: item.originalPrice,
+        weight: item.weight,
+      }, 1);
     }
 
     setReserved(true);
@@ -224,30 +170,21 @@ const ItemDetail = () => {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="flex items-baseline gap-3 mt-3">
             <span className="text-muted-foreground line-through text-sm">RM{item.originalPrice.toFixed(2)}</span>
             <span className="text-2xl font-bold text-primary">
-              {isFixed ? `RM${item.discountPrice.toFixed(2)}` : priceLabel || `RM${item.discountPrice.toFixed(2)}`}
+              {priceLabel || `RM${item.discountPrice.toFixed(2)}`}
             </span>
-            {isFixed && (
-              <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded-full font-medium">{discount}% off</span>
-            )}
+            <span className="text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded-full font-medium">{discount}% off</span>
           </motion.div>
 
           {/* Pricing type label */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.28 }} className="mt-1 flex items-center gap-2">
             <span className="text-[11px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-              {isFixed ? "Fixed price" : `Flexible — per ${item.unitType === "quantity" ? "unit" : item.unitType}`}
+              {item.pricingType === "fixed" ? "Fixed price" : `Flexible — per ${item.unitType === "quantity" ? "unit" : item.unitType}`}
             </span>
-            {stockDisplay !== null && (
-              <span className="text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                Stock: {stockDisplay} {isWeightUnit ? weightUnit : "units"}
-              </span>
-            )}
           </motion.div>
 
-          {isFixed && (
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.35 }} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary bg-accent px-3 py-1 rounded-full">
-              🎉 You save RM{saving}
-            </motion.div>
-          )}
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.35 }} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary bg-accent px-3 py-1 rounded-full">
+            🎉 You save RM{saving}
+          </motion.div>
 
           {/* Delivery info */}
           {item.deliveryType && (
@@ -322,63 +259,6 @@ const ItemDetail = () => {
         )}
 
         <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border z-30 p-4">
-          {/* Quantity / Weight selector — for all items */}
-          {!reserved && !isSold && (isFlexible || isFixed) && (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-3">
-              {isFlexible && isWeightUnit ? (
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-medium text-muted-foreground">Weight:</span>
-                  <div className="flex items-center gap-1.5 bg-muted rounded-xl px-1 py-1">
-                    <button
-                      onClick={() => setWeightAmt((v) => Math.max(weightUnit === "kg" ? 0.25 : 50, weightUnit === "kg" ? +(v - 0.25).toFixed(2) : v - 50))}
-                      className="w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm"
-                    >
-                      <Minus size={14} />
-                    </button>
-                    <span className="text-sm font-bold text-foreground w-16 text-center">
-                      {weightUnit === "kg" ? weightAmt.toFixed(2) : weightAmt} {weightUnit}
-                    </span>
-                    <button
-                      onClick={() => setWeightAmt((v) => {
-                        const next = weightUnit === "kg" ? +(v + 0.25).toFixed(2) : v + 50;
-                        if (maxAmount && next > maxAmount) { toast.error(`Max available: ${maxAmount} ${weightUnit}`); return v; }
-                        return next;
-                      })}
-                      className={`w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm ${maxAmount && weightAmt >= maxAmount ? "opacity-40" : ""}`}
-                    >
-                      <Plus size={14} />
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-medium text-muted-foreground">Qty:</span>
-                  <div className="flex items-center gap-1.5 bg-muted rounded-xl px-1 py-1">
-                    <button
-                      onClick={() => setQty((v) => Math.max(1, v - 1))}
-                      className="w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm"
-                    >
-                      <Minus size={14} />
-                    </button>
-                    <span className="text-sm font-bold text-foreground w-8 text-center">{qty}</span>
-                    <button
-                      onClick={() => setQty((v) => {
-                        const next = v + 1;
-                        const limit = maxAmount ?? Infinity;
-                        if (next > limit) { toast.error(`Max available: ${limit} ${isWeightUnit ? weightUnit : "units"}`); return v; }
-                        return next;
-                      })}
-                      className={`w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm ${maxAmount && qty >= (maxAmount) ? "opacity-40" : ""}`}
-                    >
-                      <Plus size={14} />
-                    </button>
-                  </div>
-                </div>
-              )}
-              <span className="text-sm font-bold text-primary">RM{subtotal.toFixed(2)}</span>
-            </motion.div>
-          )}
-
           <motion.button
             onClick={handleReserve}
             disabled={isSold}
@@ -401,7 +281,7 @@ const ItemDetail = () => {
             ) : (
               <>
                 <ShoppingCart size={18} />
-                Add to Cart — RM{subtotal.toFixed(2)}
+                Add to Cart — RM{item.discountPrice.toFixed(2)}
               </>
             )}
           </motion.button>
