@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Package, Truck, CheckCircle2, XCircle, Clock, ChevronRight, RotateCcw, Box } from "lucide-react";
+import { ArrowLeft, Package, Truck, CheckCircle2, XCircle, Clock, ChevronRight, Box } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useOrders, Order, OrderStatus } from "@/contexts/OrderContext";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +26,7 @@ const TIMELINE_LABELS: { status: OrderStatus; label: string }[] = [
 ];
 
 const MyOrdersPage = () => {
-  const { orders, cancelOrder } = useOrders();
+  const { orders } = useOrders();
   const navigate = useNavigate();
   const [trackingOrder, setTrackingOrder] = useState<Order | null>(null);
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
@@ -38,7 +38,6 @@ const MyOrdersPage = () => {
     { key: "packing", label: "Packing" },
     { key: "shipped", label: "Shipped" },
     { key: "delivered", label: "Delivered" },
-    { key: "cancelled", label: "Cancelled" },
   ];
 
   const formatDate = (iso: string) => {
@@ -122,16 +121,6 @@ const MyOrdersPage = () => {
                       {order.status !== "cancelled" && order.status !== "delivered" && (
                         <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => setTrackingOrder(order)}>
                           Track <ChevronRight size={14} />
-                        </Button>
-                      )}
-                      {(order.status === "pending" || order.status === "packing") && (
-                        <Button size="sm" variant="ghost" className="h-8 text-xs text-destructive hover:text-destructive" onClick={() => cancelOrder(order.id)}>
-                          Cancel
-                        </Button>
-                      )}
-                      {order.status === "delivered" && (
-                        <Button size="sm" variant="outline" className="h-8 text-xs">
-                          <RotateCcw size={14} /> Order Again
                         </Button>
                       )}
                     </div>
