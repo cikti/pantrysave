@@ -38,7 +38,7 @@ const MapPage = () => {
   const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<PreviewItem | null>(null);
   const { data: dbListings } = useListings();
-  const { position: userPos, error: locError, loading: locLoading } = useGeolocation();
+  const { position: userPos, error: locError, loading: locLoading, refresh: refreshLocation } = useGeolocation();
 
   useEffect(() => {
     if (!mapRef.current) return;
