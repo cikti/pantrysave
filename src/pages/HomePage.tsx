@@ -32,6 +32,8 @@ const HomePage = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [showRecent, setShowRecent] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>("default");
+  const [priceFilter, setPriceFilter] = useState<PriceFilter>("all");
   
   const [recentSearches, setRecentSearches] = useState<string[]>(getRecentSearches);
   const isMobile = useIsMobile();
