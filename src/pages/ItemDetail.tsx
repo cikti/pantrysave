@@ -103,7 +103,7 @@ const ItemDetail = () => {
     : null;
 
   const handleReserve = async () => {
-    if (reserved) return;
+    if (reserved || isInCart) return;
 
     if (isDbListing && dbId) {
       await addToCart(dbId, 1, undefined, 1);
