@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { MapPin, Search, X, Clock, Trash2, ShoppingCart, MessageCircle } from "lucide-react";
-import { categories, groceryItems } from "@/data/mockData";
+import { categories } from "@/data/mockData";
 import GroceryCard from "@/components/GroceryCard";
 import PageTransition from "@/components/PageTransition";
 import UserAvatar from "@/components/UserAvatar";
