@@ -1,4 +1,4 @@
-import { ShoppingBag, MapPin, PlusCircle, ShoppingCart } from "lucide-react";
+import { ShoppingBag, MapPin, PlusCircle, ShoppingCart, ClipboardList } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useCart } from "@/contexts/CartContext";
