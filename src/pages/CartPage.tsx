@@ -91,6 +91,23 @@ const CartPage = () => {
         await purchaseListing.mutateAsync({ id: item.listing_id, quantity: item.quantity });
       }
     }
+    // Create order
+    const deliveryLabel = deliveryChoice ? DELIVERY_FEES[deliveryChoice].label : "Self Pickup";
+    const sellerNames = [...new Set(selectedItems.map((i) => i.listing?.seller_name || i.listing?.address || "Seller"))];
+    addOrder({
+      items: selectedItems.map((i) => ({
+        name: i.listing?.name || "Item",
+        quantity: i.quantity,
+        price: i.listing?.discount_price || 0,
+        image: i.listing?.image_url || undefined,
+        weight: i.listing?.weight || undefined,
+      })),
+      totalAmount: grandTotal,
+      deliveryFee,
+      deliveryMethod: deliveryLabel,
+      paymentMethod: "FPX",
+      sellerNames,
+    });
     // Earn points: 1 point per RM1 spent (rounded)
     const pointsEarned = Math.max(1, Math.round(selectedTotal));
     try {
@@ -104,7 +121,7 @@ const CartPage = () => {
     setSelectedIds(new Set());
     setOrderComplete(true);
     toast.success("Payment successful! 🌿 Nice save for the planet!");
-    setTimeout(() => { setOrderComplete(false); setShowPointsFloat(null); navigate("/"); }, 2500);
+    setTimeout(() => { setOrderComplete(false); setShowPointsFloat(null); navigate("/orders"); }, 2500);
   };
 
   const handlePaymentError = (error: string) => {
