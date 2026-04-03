@@ -7,7 +7,7 @@ import { usePurchaseListing } from "@/hooks/useListings";
 import { supabase } from "@/integrations/supabase/client";
 import { usePoints } from "@/hooks/usePoints";
 import { useOrders } from "@/contexts/OrderContext";
-import { useVouchers, useUserVouchers, useClaimVoucher, useMarkVoucherUsed, calculateDiscount, Voucher } from "@/hooks/useVouchers";
+import { useUserVouchers, useMarkVoucherUsed, calculateDiscount } from "@/hooks/useVouchers";
 import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
