@@ -104,6 +104,11 @@ const CartPage = () => {
 
   const handleCheckout = () => {
     if (selectedCount === 0) { toast.error("Please select items to checkout"); return; }
+    const soldInSelection = selectedItems.filter((i) => i.isSold);
+    if (soldInSelection.length > 0) {
+      toast.error("Please remove sold-out items before checking out");
+      return;
+    }
     setShowCheckout(true);
   };
 
