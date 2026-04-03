@@ -95,13 +95,22 @@ const ItemDetail = () => {
   const saving = (item.originalPrice - item.discountPrice).toFixed(2);
   const discount = Math.round(((item.originalPrice - item.discountPrice) / item.originalPrice) * 100);
 
+  // Check if already in cart
+  const cartListingId = isDbListing && dbId ? dbId : id;
+  const isInCart = cartItems.some((ci) => ci.listing_id === cartListingId && !ci.isSold);
+
   // Price display label
   const priceLabel = item.pricingType === "flexible" && item.pricePerUnit
     ? `RM${item.pricePerUnit.toFixed(2)} / ${item.unitType === "quantity" ? "unit" : item.unitType}`
     : null;
 
   const handleReserve = async () => {
-    if (reserved) return;
+    if (reserved || isInCart) {
+      if (isInCart) {
+        navigate("/cart");
+      }
+      return;
+    }
 
     if (isDbListing && dbId) {
       await addToCart(dbId, 1, undefined, 1);
