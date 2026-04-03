@@ -4,6 +4,7 @@ import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePurchaseListing } from "@/hooks/useListings";
+import { supabase } from "@/integrations/supabase/client";
 import { usePoints } from "@/hooks/usePoints";
 import { useOrders } from "@/contexts/OrderContext";
 import { useVouchers, useUserVouchers, useClaimVoucher, useMarkVoucherUsed, calculateDiscount, Voucher } from "@/hooks/useVouchers";
