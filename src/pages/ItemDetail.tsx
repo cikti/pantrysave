@@ -110,7 +110,7 @@ const ItemDetail = () => {
   // Calculate subtotal
   let subtotal: number;
   if (isFixed) {
-    subtotal = item.discountPrice;
+    subtotal = item.discountPrice * qty;
   } else if (isFlexible && isWeightUnit) {
     const perUnit = item.pricePerUnit ?? item.discountPrice;
     subtotal = perUnit * weightAmt * (weightUnit === "g" ? 0.001 : 1);
