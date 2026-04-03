@@ -66,6 +66,7 @@ const MapPage = () => {
 
     // Add mock items
     groceryItems.forEach((item) => {
+      if (purchasedIds.has(item.id)) return;
       const pos = storeLocations[item.id];
       if (!pos) return;
       const idx = markerIndex++;
