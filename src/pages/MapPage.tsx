@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import { useListings, type Listing } from "@/hooks/useListings";
 import { MapPin } from "lucide-react";
+import { useGeolocation } from "@/hooks/useGeolocation";
 
 
 type PreviewItem = {
