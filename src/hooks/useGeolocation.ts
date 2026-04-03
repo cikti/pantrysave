@@ -30,18 +30,14 @@ export function useGeolocation() {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(!getCached());
 
-  useEffect(() => {
-    // If we already have a cached position, don't re-request immediately
-    if (position) {
-      setLoading(false);
-    }
-
+  const requestLocation = () => {
     if (!navigator.geolocation) {
       setError(true);
       setLoading(false);
       return;
     }
-
+    setLoading(true);
+    setError(false);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
@@ -55,7 +51,19 @@ export function useGeolocation() {
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
+  };
+
+  useEffect(() => {
+    if (position) {
+      setLoading(false);
+    }
+    requestLocation();
   }, []);
 
-  return { position, error, loading };
+  const refresh = () => {
+    sessionStorage.removeItem(CACHE_KEY);
+    requestLocation();
+  };
+
+  return { position, error, loading, refresh };
 }

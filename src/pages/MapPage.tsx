@@ -5,7 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import { useListings, type Listing } from "@/hooks/useListings";
-import { MapPin } from "lucide-react";
+import { MapPin, LocateFixed } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useGeolocation } from "@/hooks/useGeolocation";
 
 
