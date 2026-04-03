@@ -38,6 +38,8 @@ const ItemDetail = () => {
   const mockItem = !isDbListing ? groceryItems.find((i) => i.id === id) : null;
 
   const isSold = dbItem?.status === "sold";
+  const cartListingId = isDbListing ? dbId : id;
+  const isInCart = cartItems.some((ci) => ci.listing_id === cartListingId);
 
   // Normalize item data
   const item = mockItem
