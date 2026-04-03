@@ -49,12 +49,29 @@ function loadOrders(): Order[] {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
 }
 
+function loadPurchased(): string[] {
+  try { return JSON.parse(localStorage.getItem(PURCHASED_KEY) || "[]"); } catch { return []; }
+}
+
 export function OrderProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>(loadOrders);
+  const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set(loadPurchased()));
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
   }, [orders]);
+
+  useEffect(() => {
+    localStorage.setItem(PURCHASED_KEY, JSON.stringify([...purchasedIds]));
+  }, [purchasedIds]);
+
+  const markPurchased = useCallback((ids: string[]) => {
+    setPurchasedIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+  }, []);
 
   const addOrder = useCallback((data: Omit<Order, "id" | "createdAt" | "status" | "timeline">) => {
     const now = new Date().toISOString();
@@ -80,7 +97,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <OrderContext.Provider value={{ orders, addOrder, cancelOrder, orderCount: orders.length }}>
+    <OrderContext.Provider value={{ orders, addOrder, cancelOrder, orderCount: orders.length, purchasedIds, markPurchased }}>
       {children}
     </OrderContext.Provider>
   );
