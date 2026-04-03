@@ -60,7 +60,7 @@ export function useConversations() {
             .from("profiles")
             .select("name, avatar_url")
             .eq("id", otherUserId)
-            .single();
+            .maybeSingle();
 
           return {
             ...c,
