@@ -89,16 +89,8 @@ const ItemDetail = () => {
       return;
     }
 
-    if (isDbListing && dbId) {
+    if (dbId) {
       await addToCart(dbId, 1, undefined, 1);
-    } else if (mockItem && id) {
-      await addToCart(id, 1, {
-        name: item.name,
-        image_url: item.image,
-        discount_price: item.discountPrice,
-        original_price: item.originalPrice,
-        weight: item.weight,
-      }, 1);
     }
 
     setReserved(true);
