@@ -37,21 +37,7 @@ const MapPage = () => {
   const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<PreviewItem | null>(null);
   const { data: dbListings } = useListings();
-  const [userPos, setUserPos] = useState<[number, number] | null>(null);
-  const [locError, setLocError] = useState(false);
-
-  // Request geolocation
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      setLocError(true);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setUserPos([pos.coords.latitude, pos.coords.longitude]),
-      () => setLocError(true),
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  }, []);
+  const { position: userPos, error: locError, loading: locLoading } = useGeolocation();
 
   useEffect(() => {
     if (!mapRef.current) return;
