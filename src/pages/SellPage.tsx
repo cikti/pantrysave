@@ -137,6 +137,7 @@ const SellPage = () => {
         stock_quantity: maxQty ? Math.floor(maxQty) : 1,
       });
 
+      try { await incrementItemsListed.mutateAsync(1); } catch {}
       toast.success("You rescued this item! 🌿", {
         description: "Your listing is now live",
       });

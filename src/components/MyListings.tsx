@@ -31,7 +31,10 @@ const MyListings = () => {
 
   const handleDelete = (id: string) => {
     deleteListing.mutate(id, {
-      onSuccess: () => toast.success("Listing removed"),
+      onSuccess: () => {
+        toast.success("Listing removed");
+        try { incrementItemsListed.mutate(-1); } catch {}
+      },
     });
   };
 
