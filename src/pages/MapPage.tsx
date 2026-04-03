@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import { useListings, type Listing } from "@/hooks/useListings";
 import { MapPin } from "lucide-react";
+import { useGeolocation } from "@/hooks/useGeolocation";
 
 
 type PreviewItem = {
@@ -36,21 +37,7 @@ const MapPage = () => {
   const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<PreviewItem | null>(null);
   const { data: dbListings } = useListings();
-  const [userPos, setUserPos] = useState<[number, number] | null>(null);
-  const [locError, setLocError] = useState(false);
-
-  // Request geolocation
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      setLocError(true);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setUserPos([pos.coords.latitude, pos.coords.longitude]),
-      () => setLocError(true),
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  }, []);
+  const { position: userPos, error: locError, loading: locLoading } = useGeolocation();
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -138,7 +125,7 @@ const MapPage = () => {
         <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md px-4 pt-4 pb-3">
           <h1 className="text-lg font-bold text-foreground tracking-tight">Nearby Listings</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {locError ? (
+            {locError && !userPos ? (
               <span className="flex items-center gap-1 text-destructive">
                 <MapPin size={12} /> Enable location to see nearby products
               </span>

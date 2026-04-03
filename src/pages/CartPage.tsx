@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
 import FPXPaymentModal from "@/components/FPXPaymentModal";
+import { useGeolocation } from "@/hooks/useGeolocation";
 
 const DELIVERY_FEES: Record<string, { fee: number; label: string }> = {
   grab: { fee: 8, label: "GrabExpress" },
@@ -44,23 +45,13 @@ const CartPage = () => {
   const [showFPX, setShowFPX] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showPointsFloat, setShowPointsFloat] = useState<number | null>(null);
-  const [buyerPos, setBuyerPos] = useState<[number, number] | null>(null);
+  const { position: buyerPos } = useGeolocation();
 
   // Voucher state
   const { data: userVouchers } = useUserVouchers();
   const markVoucherUsed = useMarkVoucherUsed();
   const [selectedVoucherId, setSelectedVoucherId] = useState<string | null>(null);
   const [showVouchers, setShowVouchers] = useState(false);
-
-  // Get buyer location for distance alerts
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setBuyerPos([pos.coords.latitude, pos.coords.longitude]),
-        () => {}
-      );
-    }
-  }, []);
 
   const toggleSelect = (id: string) => {
     const item = items.find((i) => i.listing_id === id);
