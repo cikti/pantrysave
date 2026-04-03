@@ -43,6 +43,9 @@ const CartPage = () => {
   const [showVouchers, setShowVouchers] = useState(false);
 
   const toggleSelect = (id: string) => {
+    // Don't allow selecting sold items
+    const item = items.find((i) => i.listing_id === id);
+    if (item?.isSold) return;
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
@@ -50,16 +53,17 @@ const CartPage = () => {
     });
   };
 
-  const allSelected = items.length > 0 && items.every((i) => selectedIds.has(i.listing_id));
+  const availableItems = items.filter((i) => !i.isSold);
+  const allSelected = availableItems.length > 0 && availableItems.every((i) => selectedIds.has(i.listing_id));
   const toggleAll = () => {
     if (allSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(items.map((i) => i.listing_id)));
+      setSelectedIds(new Set(availableItems.map((i) => i.listing_id)));
     }
   };
 
-  const selectedItems = useMemo(() => items.filter((i) => selectedIds.has(i.listing_id)), [items, selectedIds]);
+  const selectedItems = useMemo(() => items.filter((i) => selectedIds.has(i.listing_id) && !i.isSold), [items, selectedIds]);
   const selectedTotal = useMemo(
     () => selectedItems.reduce((sum, item) => sum + (item.listing?.discount_price || 0) * item.quantity, 0),
     [selectedItems]
