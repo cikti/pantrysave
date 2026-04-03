@@ -33,6 +33,7 @@ const App = () => (
         <AuthProvider>
           <CartProvider>
           <ChatProvider>
+          <OrderProvider>
           <AppLayout>
             <Routes>
               <Route path="/" element={<Index />} />
