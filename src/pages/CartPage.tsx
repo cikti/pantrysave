@@ -47,6 +47,12 @@ const CartPage = () => {
   const [showPointsFloat, setShowPointsFloat] = useState<number | null>(null);
   const { position: buyerPos } = useGeolocation();
 
+  // Voucher state
+  const { data: userVouchers } = useUserVouchers();
+  const markVoucherUsed = useMarkVoucherUsed();
+  const [selectedVoucherId, setSelectedVoucherId] = useState<string | null>(null);
+  const [showVouchers, setShowVouchers] = useState(false);
+
   const toggleSelect = (id: string) => {
     const item = items.find((i) => i.listing_id === id);
     if (item?.isSold) return;
