@@ -85,36 +85,9 @@ const CartPage = () => {
     return calculateDiscount(selectedVoucher.voucher, selectedTotal);
   }, [selectedVoucher, selectedTotal]);
 
-  const deliveryFee = deliveryChoice ? DELIVERY_FEES[deliveryChoice].fee : 0;
+  const chosenOption = availableDeliveryOptions.find(o => o.key === deliveryChoice);
+  const deliveryFee = chosenOption?.fee ?? (deliveryChoice ? DELIVERY_FEES[deliveryChoice]?.fee ?? 0 : 0);
   const grandTotal = Math.max(0, selectedTotal - voucherDiscount + deliveryFee);
-
-  if (!user) {
-    return (
-      <PageTransition>
-        <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6 text-center">
-          <ShoppingCart size={48} className="text-muted-foreground" />
-          <p className="text-muted-foreground">Please log in to view your cart</p>
-          <button onClick={() => navigate("/login")} className="text-primary font-semibold">Log in</button>
-        </div>
-      </PageTransition>
-    );
-  }
-
-  const handleCheckout = () => {
-    if (selectedCount === 0) { toast.error("Please select items to checkout"); return; }
-    const soldInSelection = selectedItems.filter((i) => i.isSold);
-    if (soldInSelection.length > 0) {
-      toast.error("Please remove sold-out items before checking out");
-      return;
-    }
-    setShowCheckout(true);
-  };
-
-  const handleConfirmOrder = () => {
-    if (!deliveryChoice) { toast.error("Please select a delivery option"); return; }
-    setShowCheckout(false);
-    setShowFPX(true);
-  };
 
   // Get buyer location for distance alerts
   useEffect(() => {
@@ -126,30 +99,17 @@ const CartPage = () => {
     }
   }, []);
 
-  function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-    const R = 6371;
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  }
-
   // Get available delivery options from selected items' listings
-  const availableDeliveryOptions = useMemo(() => {
-    // Collect all delivery options from selected items
+  const availableDeliveryOptions2 = useMemo(() => {
     const allOptions = new Map<string, { key: string; label: string; fee: number; estimatedTime: string }>();
-    
     for (const item of selectedItems) {
       const listing = item.listing as any;
       const opts = listing?.delivery_options;
       if (Array.isArray(opts) && opts.length > 0) {
         for (const opt of opts) {
-          if (!allOptions.has(opt.key)) {
-            allOptions.set(opt.key, opt);
-          }
+          if (!allOptions.has(opt.key)) allOptions.set(opt.key, opt);
         }
       } else {
-        // Fallback: use legacy delivery_type field
         const dt = listing?.delivery_type;
         if (dt === "pickup" || !dt) {
           allOptions.set("pickup", { key: "pickup", label: "Self Pickup", fee: 0, estimatedTime: "Ready in 1 hour" });
@@ -160,8 +120,6 @@ const CartPage = () => {
         }
       }
     }
-    
-    // If no options found, show all defaults
     if (allOptions.size === 0) {
       return [
         { key: "pickup", label: "Self Pickup", fee: 0, estimatedTime: "Ready in 1 hour" },
@@ -169,14 +127,12 @@ const CartPage = () => {
         { key: "lalamove", label: "Lalamove", fee: 6, estimatedTime: "1-3 hours" },
       ];
     }
-    
     return [...allOptions.values()];
   }, [selectedItems]);
 
   // Distance alert for pickup
   const distanceInfo = useMemo(() => {
     if (!buyerPos || deliveryChoice !== "pickup") return null;
-    // Find closest seller location
     let minDist = Infinity;
     for (const item of selectedItems) {
       const lat = (item.listing as any)?.latitude;
@@ -189,6 +145,18 @@ const CartPage = () => {
     if (minDist === Infinity) return null;
     return { distance: minDist };
   }, [buyerPos, deliveryChoice, selectedItems]);
+
+  if (!user) {
+    return (
+      <PageTransition>
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6 text-center">
+          <ShoppingCart size={48} className="text-muted-foreground" />
+          <p className="text-muted-foreground">Please log in to view your cart</p>
+          <button onClick={() => navigate("/login")} className="text-primary font-semibold">Log in</button>
+        </div>
+      </PageTransition>
+    );
+  }
 
 
   const handlePaymentSuccess = async (_paymentUrl: string) => {
