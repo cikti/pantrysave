@@ -93,7 +93,7 @@ const HomePage = () => {
       );
     }
     return items;
-  }, [activeCategory, searchQuery, shopItems]);
+  }, [activeCategory, searchQuery, allItems]);
 
   return (
     <PageTransition>
