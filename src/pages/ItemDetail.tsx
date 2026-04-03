@@ -93,6 +93,9 @@ const ItemDetail = () => {
   const weightUnit = item?.unitType === "g" ? "g" : "kg";
   const maxAmount = item?.maxQuantity ?? undefined;
 
+  // Show stock availability for all items
+  const stockDisplay = stockLeft !== null ? stockLeft : (item?.maxQuantity ?? null);
+
   if (!item) {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
