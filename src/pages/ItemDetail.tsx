@@ -262,17 +262,24 @@ const ItemDetail = () => {
 
         <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border z-30 p-4">
           <motion.button
-            onClick={handleReserve}
+            onClick={isInCart ? () => navigate("/cart") : handleReserve}
             disabled={isSold}
-            whileTap={!reserved && !isSold ? { scale: 0.96 } : {}}
+            whileTap={!reserved && !isSold && !isInCart ? { scale: 0.96 } : {}}
             className={`w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-colors duration-300 ${
               isSold
                 ? "bg-muted text-muted-foreground cursor-not-allowed"
+                : isInCart
+                ? "bg-[hsl(35,90%,55%)] text-white"
                 : reserved ? "bg-accent text-primary" : "bg-primary text-primary-foreground"
             }`}
           >
             {isSold ? (
               "Sold Out"
+            ) : isInCart ? (
+              <>
+                <ShoppingCart size={18} />
+                Already in Cart — View Cart
+              </>
             ) : reserved ? (
               <>
                 <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
