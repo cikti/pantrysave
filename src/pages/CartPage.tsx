@@ -172,6 +172,23 @@ const CartPage = () => {
       paymentMethod: "FPX",
       sellerNames,
     });
+
+    // Record impact metrics
+    const moneySaved = selectedItems.reduce((sum, i) => {
+      const orig = i.listing?.original_price || 0;
+      const disc = i.listing?.discount_price || 0;
+      return sum + Math.max(0, orig - disc);
+    }, 0);
+    const foodSavedKg = selectedItems.reduce((sum, i) => {
+      const w = i.listing?.weight || "";
+      const kgMatch = w.match(/([\d.]+)\s*kg/i);
+      if (kgMatch) return sum + parseFloat(kgMatch[1]);
+      const gMatch = w.match(/([\d.]+)\s*g(?!r)/i);
+      if (gMatch) return sum + parseFloat(gMatch[1]) / 1000;
+      return sum;
+    }, 0);
+    try { await recordPurchase.mutateAsync({ moneySaved, foodSavedKg }); } catch {}
+
     // Earn points: 1 point per RM1 spent (rounded)
     const pointsEarned = Math.max(1, Math.round(selectedTotal));
     try {
