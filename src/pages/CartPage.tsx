@@ -221,7 +221,7 @@ const CartPage = () => {
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-xs text-muted-foreground">
-                        Qty: {item.quantity}{item.listing?.weight ? ` · ${item.listing.weight}` : ""}
+                        Qty: {item.listing?.weight || item.quantity}
                       </span>
                       <button onClick={() => setConfirmRemove(item.listing_id)} className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
                         <Trash2 size={14} />
