@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import { useListings, type Listing } from "@/hooks/useListings";
+import { useOrders } from "@/contexts/OrderContext";
 import type { GroceryItem } from "@/data/mockData";
 
 const storeLocations: Record<string, [number, number]> = {
@@ -33,6 +34,7 @@ const MapPage = () => {
   const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<PreviewItem | null>(null);
   const { data: dbListings } = useListings();
+  const { purchasedIds } = useOrders();
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -64,6 +66,7 @@ const MapPage = () => {
 
     // Add mock items
     groceryItems.forEach((item) => {
+      if (purchasedIds.has(item.id)) return;
       const pos = storeLocations[item.id];
       if (!pos) return;
       const idx = markerIndex++;
@@ -107,7 +110,7 @@ const MapPage = () => {
       map.remove();
       mapInstance.current = null;
     };
-  }, [dbListings]);
+  }, [dbListings, purchasedIds]);
 
   const handlePreviewClick = () => {
     if (!selectedItem) return;

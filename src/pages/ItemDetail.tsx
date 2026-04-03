@@ -9,6 +9,7 @@ import { useListings, useListingById } from "@/hooks/useListings";
 import { useCart } from "@/contexts/CartContext";
 import { useChat } from "@/contexts/ChatContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrders } from "@/contexts/OrderContext";
 
 const badgeColors: Record<string, string> = {
   expiry: "bg-[hsl(var(--badge-expiry))] text-primary-foreground",
@@ -24,6 +25,7 @@ const ItemDetail = () => {
   const { openChat } = useChat();
   const { user } = useAuth();
   const [reserved, setReserved] = useState(false);
+  const { purchasedIds } = useOrders();
   const [showFloat, setShowFloat] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
@@ -37,7 +39,8 @@ const ItemDetail = () => {
   const dbItem = directDbItem || dbListings?.find((l) => l.id === dbId);
   const mockItem = !isDbListing ? groceryItems.find((i) => i.id === id) : null;
 
-  const isSold = dbItem?.status === "sold";
+  const isMockPurchased = !isDbListing && id ? purchasedIds.has(id) : false;
+  const isSold = dbItem?.status === "sold" || isMockPurchased;
   const cartListingId = isDbListing ? dbId : id;
   const isInCart = cartItems.some((ci) => ci.listing_id === cartListingId);
 
@@ -50,8 +53,8 @@ const ItemDetail = () => {
         weight: mockItem.weight,
         originalPrice: mockItem.originalPrice,
         discountPrice: mockItem.clearancePrice,
-        badge: mockItem.badge,
-        badgeType: mockItem.badgeType,
+        badge: isMockPurchased ? "SOLD" : mockItem.badge,
+        badgeType: isMockPurchased ? "sold" as const : mockItem.badgeType,
         reason: mockItem.reason,
         deliveryType: null as string | null,
         deliveryService: null as string | null,
