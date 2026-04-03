@@ -20,7 +20,7 @@ const badgeColors: Record<string, string> = {
 const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addToCart, items: cartItems } = useCart();
   const { openChat } = useChat();
   const { user } = useAuth();
   const [reserved, setReserved] = useState(false);
