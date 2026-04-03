@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import { useListings, type Listing } from "@/hooks/useListings";
-import type { GroceryItem } from "@/data/mockData";
+import { MapPin } from "lucide-react";
 
 const storeLocations: Record<string, [number, number]> = {
   "1": [3.157, 101.712],
@@ -25,7 +25,19 @@ type PreviewItem = {
   originalPrice: number;
   discountPrice: number;
   isDbListing?: boolean;
+  lat?: number;
+  lng?: number;
 };
+
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 const MapPage = () => {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -33,22 +45,50 @@ const MapPage = () => {
   const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<PreviewItem | null>(null);
   const { data: dbListings } = useListings();
+  const [userPos, setUserPos] = useState<[number, number] | null>(null);
+  const [locError, setLocError] = useState(false);
+
+  // Request geolocation
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocError(true);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserPos([pos.coords.latitude, pos.coords.longitude]),
+      () => setLocError(true),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, []);
 
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Clean up previous instance
     if (mapInstance.current) {
       mapInstance.current.remove();
       mapInstance.current = null;
     }
 
-    const map = L.map(mapRef.current).setView([3.155, 101.705], 14);
+    const center: [number, number] = userPos || [3.155, 101.705];
+    const map = L.map(mapRef.current).setView(center, 14);
     mapInstance.current = map;
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
+
+    // User location blue dot
+    if (userPos) {
+      const userIcon = L.divIcon({
+        className: "",
+        html: `<div style="width:16px;height:16px;background:hsl(217,91%,60%);border:3px solid white;border-radius:50%;box-shadow:0 0 8px rgba(59,130,246,0.5);"></div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+      });
+      L.marker(userPos, { icon: userIcon, zIndexOffset: 1000 })
+        .addTo(map)
+        .bindPopup("You are here");
+    }
 
     const defaultIcon = L.icon({
       iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -62,7 +102,6 @@ const MapPage = () => {
 
     let markerIndex = 0;
 
-    // Add mock items
     groceryItems.forEach((item) => {
       const pos = storeLocations[item.id];
       if (!pos) return;
@@ -77,11 +116,12 @@ const MapPage = () => {
           image: item.image,
           originalPrice: item.originalPrice,
           discountPrice: item.clearancePrice,
+          lat: pos[0],
+          lng: pos[1],
         });
       });
     });
 
-    // Add DB listings with coordinates
     (dbListings || []).forEach((listing) => {
       if (!listing.latitude || !listing.longitude) return;
       const idx = markerIndex++;
@@ -96,6 +136,8 @@ const MapPage = () => {
           originalPrice: Number(listing.original_price),
           discountPrice: Number(listing.discount_price),
           isDbListing: true,
+          lat: listing.latitude!,
+          lng: listing.longitude!,
         });
       });
     });
@@ -107,7 +149,7 @@ const MapPage = () => {
       map.remove();
       mapInstance.current = null;
     };
-  }, [dbListings]);
+  }, [dbListings, userPos]);
 
   const handlePreviewClick = () => {
     if (!selectedItem) return;
@@ -118,12 +160,27 @@ const MapPage = () => {
     }
   };
 
+  const distanceText =
+    userPos && selectedItem?.lat && selectedItem?.lng
+      ? `${haversineKm(userPos[0], userPos[1], selectedItem.lat, selectedItem.lng).toFixed(1)}km away`
+      : null;
+
   return (
     <PageTransition>
       <div className="min-h-screen pb-24 flex flex-col">
         <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md px-4 pt-4 pb-3">
           <h1 className="text-lg font-bold text-foreground tracking-tight">Nearby Listings</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Tap a marker to see item details</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {locError ? (
+              <span className="flex items-center gap-1 text-destructive">
+                <MapPin size={12} /> Enable location to see nearby products
+              </span>
+            ) : userPos ? (
+              "Tap a marker to see item details"
+            ) : (
+              "Getting your location…"
+            )}
+          </p>
         </header>
 
         <div className="flex-1 px-4 pb-4 relative">
@@ -159,7 +216,14 @@ const MapPage = () => {
                       RM{selectedItem.discountPrice.toFixed(2)}
                     </span>
                   </div>
-                  <span className="text-[10px] font-medium text-primary mt-0.5">Tap to view →</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {distanceText && (
+                      <span className="text-[10px] font-medium text-accent-foreground bg-accent px-1.5 py-0.5 rounded-full">
+                        {distanceText}
+                      </span>
+                    )}
+                    <span className="text-[10px] font-medium text-primary">Tap to view →</span>
+                  </div>
                 </div>
               </motion.div>
             )}
