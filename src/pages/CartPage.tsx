@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info, Square, CheckSquare, Tag, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info, Square, CheckSquare, Tag, X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -318,11 +319,11 @@ const CartPage = () => {
           </div>
         )}
 
-          {/* Voucher Section */}
+          {/* Apply Voucher Button */}
           {selectedCount > 0 && (
             <div className="px-4 pb-3">
               <button
-                onClick={() => setShowVouchers(!showVouchers)}
+                onClick={() => setShowVouchers(true)}
                 className="w-full flex items-center justify-between p-3 rounded-xl bg-card border border-border hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-center gap-2">
@@ -336,70 +337,84 @@ const CartPage = () => {
                     </span>
                   )}
                 </div>
-                {showVouchers ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
+                <Tag size={14} className="text-muted-foreground" />
               </button>
-
-              <AnimatePresence>
-                {showVouchers && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="mt-2 space-y-2">
-                      {/* No voucher option */}
-                      <button
-                        onClick={() => { setSelectedVoucherId(null); setShowVouchers(false); }}
-                        className={`w-full text-left p-3 rounded-lg border-2 transition-colors text-sm ${
-                          !selectedVoucherId ? "border-primary bg-primary/5" : "border-border bg-card"
-                        }`}
-                      >
-                        <span className="font-medium text-foreground">No voucher</span>
-                      </button>
-
-                      {/* User's claimed vouchers */}
-                      {userVouchers?.map((uv) => {
-                        if (!uv.voucher) return null;
-                        const discount = calculateDiscount(uv.voucher, selectedTotal);
-                        const meetsMin = selectedTotal >= uv.voucher.min_spend;
-                        return (
-                          <button
-                            key={uv.id}
-                            onClick={() => {
-                              if (!meetsMin) { toast.error(`Min spend RM${uv.voucher!.min_spend.toFixed(2)} required`); return; }
-                              setSelectedVoucherId(uv.id);
-                              setShowVouchers(false);
-                            }}
-                            className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
-                              selectedVoucherId === uv.id ? "border-primary bg-primary/5" : "border-border bg-card"
-                            } ${!meetsMin ? "opacity-50" : ""}`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-foreground">{uv.voucher.name}</span>
-                              {meetsMin && discount > 0 && (
-                                <span className="text-xs font-semibold text-primary">-RM{discount.toFixed(2)}</span>
-                              )}
-                            </div>
-                            {uv.voucher.min_spend > 0 && (
-                              <p className="text-[11px] text-muted-foreground mt-0.5">
-                                Min spend RM{uv.voucher.min_spend.toFixed(2)}
-                                {!meetsMin && " (not met)"}
-                              </p>
-                            )}
-                          </button>
-                        );
-                      })}
-
-                      {(!userVouchers?.length) && (
-                        <p className="text-xs text-muted-foreground text-center py-3">No vouchers available. Claim vouchers from the Points page!</p>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           )}
+
+          {/* Voucher Selection Modal */}
+          <Dialog open={showVouchers} onOpenChange={setShowVouchers}>
+            <DialogContent className="max-w-md mx-auto max-h-[70vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Tag size={18} className="text-primary" />
+                  My Vouchers
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-2 mt-2">
+                {/* No voucher option */}
+                <button
+                  onClick={() => { setSelectedVoucherId(null); setShowVouchers(false); }}
+                  className={`w-full text-left p-3 rounded-lg border-2 transition-colors text-sm ${
+                    !selectedVoucherId ? "border-primary bg-primary/5" : "border-border bg-card"
+                  }`}
+                >
+                  <span className="font-medium text-foreground">No voucher</span>
+                </button>
+
+                {userVouchers?.map((uv) => {
+                  if (!uv.voucher) return null;
+                  const discount = calculateDiscount(uv.voucher, selectedTotal);
+                  const meetsMin = selectedTotal >= uv.voucher.min_spend;
+                  return (
+                    <button
+                      key={uv.id}
+                      onClick={() => {
+                        if (!meetsMin) { toast.error(`Min spend RM${uv.voucher!.min_spend.toFixed(2)} required`); return; }
+                        setSelectedVoucherId(uv.id);
+                        setShowVouchers(false);
+                        toast.success(`Voucher "${uv.voucher!.name}" applied!`);
+                      }}
+                      className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
+                        selectedVoucherId === uv.id ? "border-primary bg-primary/5" : "border-border bg-card"
+                      } ${!meetsMin ? "opacity-50" : ""}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-foreground">{uv.voucher.name}</span>
+                        {meetsMin && discount > 0 && (
+                          <span className="text-xs font-semibold text-primary">-RM{discount.toFixed(2)}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <div>
+                          {uv.voucher.min_spend > 0 && (
+                            <p className="text-[11px] text-muted-foreground">
+                              Min spend RM{uv.voucher.min_spend.toFixed(2)}
+                              {!meetsMin && " (not met)"}
+                            </p>
+                          )}
+                          {uv.voucher.expires_at && (
+                            <p className="text-[11px] text-muted-foreground">
+                              Expires: {new Date(uv.voucher.expires_at).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                        {meetsMin && (
+                          <span className="text-xs font-semibold text-primary-foreground bg-primary px-3 py-1 rounded-full">
+                            Apply
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+
+                {(!userVouchers?.length) && (
+                  <p className="text-xs text-muted-foreground text-center py-3">No vouchers available. Claim vouchers from the Points page!</p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
 
         {items.length > 0 && !showCheckout && (
           <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border p-4 z-30 px-[16px] py-[8px]">
