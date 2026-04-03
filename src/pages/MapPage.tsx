@@ -8,14 +8,6 @@ import PageTransition from "@/components/PageTransition";
 import { useListings, type Listing } from "@/hooks/useListings";
 import { MapPin } from "lucide-react";
 
-const storeLocations: Record<string, [number, number]> = {
-  "1": [3.157, 101.712],
-  "2": [3.139, 101.6869],
-  "3": [3.171, 101.705],
-  "4": [3.148, 101.723],
-  "5": [3.162, 101.695],
-  "6": [3.135, 101.71],
-};
 
 type PreviewItem = {
   id: string;
