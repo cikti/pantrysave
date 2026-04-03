@@ -20,6 +20,7 @@ const MyListings = () => {
   const { data: listings, isLoading } = useMyListings();
   const updateStatus = useUpdateListingStatus();
   const deleteListing = useDeleteListing();
+  const { incrementItemsListed } = useImpact();
 
   const handleMarkSold = (id: string) => {
     updateStatus.mutate(
