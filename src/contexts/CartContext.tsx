@@ -78,6 +78,40 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => { fetchCart(); }, [fetchCart]);
 
+  // Real-time listener: mark cart items as sold when listings change
+  useEffect(() => {
+    const channel = supabase
+      .channel("cart-listings-realtime")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "listings" },
+        (payload) => {
+          const updated = payload.new as { id: string; status: string; stock_quantity: number };
+          if (updated.status === "sold" || updated.stock_quantity <= 0) {
+            // Mark matching items as sold in both db and mock items
+            const markSold = (prev: CartItem[]) =>
+              prev.map((item) =>
+                item.listing_id === updated.id ? { ...item, isSold: true } : item
+              );
+            setDbItems(markSold);
+            setMockItems((prev) => {
+              const next = markSold(prev);
+              saveMockCart(next);
+              return next;
+            });
+            // Find the item name for notification
+            const allItems = [...dbItems, ...mockItems];
+            const affected = allItems.find((i) => i.listing_id === updated.id);
+            if (affected) {
+              toast.info(`"${affected.listing?.name || "An item"}" has been purchased by another user and is no longer available.`);
+            }
+          }
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [dbItems, mockItems]);
+
   const items = [...dbItems, ...mockItems];
 
   const addToCart = async (listingId: string, quantity = 1, mockData?: CartItem["listing"], maxQuantity?: number) => {
