@@ -80,7 +80,7 @@ const HomePage = () => {
   const allItems = useMemo(() => [...groceryItems, ...dbItems], [dbItems]);
 
   const filtered = useMemo(() => {
-    let items = activeCategory === "All" ? shopItems : shopItems.filter((i) => i.category === activeCategory);
+    let items = activeCategory === "All" ? allItems : allItems.filter((i) => i.category === activeCategory);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       items = items.filter(
