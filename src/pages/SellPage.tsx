@@ -20,6 +20,7 @@ const SellPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const createListing = useCreateListing();
+  const { incrementItemsListed } = useImpact();
   const [currentStep, setCurrentStep] = useState(0);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
