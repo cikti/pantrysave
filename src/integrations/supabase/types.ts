@@ -385,7 +385,9 @@ export type Database = {
           max_uses: number | null
           min_spend: number
           name: string
+          points_cost: number
           times_used: number
+          voucher_type: string
         }
         Insert: {
           code: string
@@ -398,7 +400,9 @@ export type Database = {
           max_uses?: number | null
           min_spend?: number
           name: string
+          points_cost?: number
           times_used?: number
+          voucher_type?: string
         }
         Update: {
           code?: string
@@ -411,7 +415,9 @@ export type Database = {
           max_uses?: number | null
           min_spend?: number
           name?: string
+          points_cost?: number
           times_used?: number
+          voucher_type?: string
         }
         Relationships: []
       }
