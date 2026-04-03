@@ -85,8 +85,8 @@ const CartPage = () => {
     return calculateDiscount(selectedVoucher.voucher, selectedTotal);
   }, [selectedVoucher, selectedTotal]);
 
-  const chosenOption = availableDeliveryOptions.find(o => o.key === deliveryChoice);
-  const deliveryFee = chosenOption?.fee ?? (deliveryChoice ? DELIVERY_FEES[deliveryChoice]?.fee ?? 0 : 0);
+  const chosenOption = availableDeliveryOptions2.find(o => o.key === deliveryChoice);
+  const deliveryFee = chosenOption?.fee ?? 0;
   const grandTotal = Math.max(0, selectedTotal - voucherDiscount + deliveryFee);
 
   // Get buyer location for distance alerts
