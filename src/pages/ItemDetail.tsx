@@ -39,7 +39,8 @@ const ItemDetail = () => {
   const dbItem = directDbItem || dbListings?.find((l) => l.id === dbId);
   const mockItem = !isDbListing ? groceryItems.find((i) => i.id === id) : null;
 
-  const isSold = dbItem?.status === "sold";
+  const isMockPurchased = !isDbListing && id ? purchasedIds.has(id) : false;
+  const isSold = dbItem?.status === "sold" || isMockPurchased;
   const cartListingId = isDbListing ? dbId : id;
   const isInCart = cartItems.some((ci) => ci.listing_id === cartListingId);
 
