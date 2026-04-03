@@ -4,6 +4,7 @@ import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePurchaseListing } from "@/hooks/useListings";
+import { supabase } from "@/integrations/supabase/client";
 import { usePoints } from "@/hooks/usePoints";
 import { useOrders } from "@/contexts/OrderContext";
 import { useVouchers, useUserVouchers, useClaimVoucher, useMarkVoucherUsed, calculateDiscount, Voucher } from "@/hooks/useVouchers";
@@ -24,7 +25,7 @@ const CartPage = () => {
   const navigate = useNavigate();
   const purchaseListing = usePurchaseListing();
   const { earnPoints } = usePoints();
-  const { addOrder, markPurchased } = useOrders();
+  const { addOrder } = useOrders();
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [deliveryChoice, setDeliveryChoice] = useState<"pickup" | "grab" | "lalamove" | null>(null);
@@ -111,14 +112,37 @@ const CartPage = () => {
 
   const handlePaymentSuccess = async (_paymentUrl: string) => {
     setShowFPX(false);
+
+    // Concurrency check: verify stock before processing
+    const soldOutItems: string[] = [];
+    for (const item of selectedItems) {
+      if (!item.isMock) {
+        const { data } = await supabase
+          .from("listings")
+          .select("stock_quantity, status")
+          .eq("id", item.listing_id)
+          .maybeSingle();
+        if (!data || data.status === "sold" || data.stock_quantity < item.quantity) {
+          soldOutItems.push(item.listing?.name || "Item");
+        }
+      }
+    }
+    if (soldOutItems.length > 0) {
+      toast.error(`Sold out: ${soldOutItems.join(", ")}. Please remove and try again.`);
+      return;
+    }
+
     // Decrement stock and mark sold if stock reaches 0
     for (const item of selectedItems) {
       if (!item.isMock) {
-        await purchaseListing.mutateAsync({ id: item.listing_id, quantity: item.quantity });
+        try {
+          await purchaseListing.mutateAsync({ id: item.listing_id, quantity: item.quantity });
+        } catch {
+          toast.error(`Failed to purchase ${item.listing?.name || "item"} — it may have been sold out.`);
+          return;
+        }
       }
     }
-    // Mark items as permanently purchased
-    markPurchased(selectedItems.map((i) => i.listing_id));
 
     // Mark voucher as used
     if (selectedVoucher?.userVoucherId) {
