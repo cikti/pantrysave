@@ -66,14 +66,6 @@ const MyOrders = () => {
                       Track <ChevronRight size={14} />
                     </Button>
                   )}
-                  {order.status === "delivered" && (
-                    <Button size="sm" variant="outline" className="flex-1 h-8 text-xs">
-                      <RotateCcw size={14} /> Order Again
-                    </Button>
-                  )}
-                  {order.status === "cancelled" && (
-                    <span className="text-xs text-muted-foreground italic">Order cancelled</span>
-                  )}
                 </div>
               </div>
             );

@@ -124,16 +124,6 @@ const MyOrdersPage = () => {
                           Track <ChevronRight size={14} />
                         </Button>
                       )}
-                      {(order.status === "pending" || order.status === "packing") && (
-                        <Button size="sm" variant="ghost" className="h-8 text-xs text-destructive hover:text-destructive" onClick={() => cancelOrder(order.id)}>
-                          Cancel
-                        </Button>
-                      )}
-                      {order.status === "delivered" && (
-                        <Button size="sm" variant="outline" className="h-8 text-xs">
-                          <RotateCcw size={14} /> Order Again
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </motion.div>
