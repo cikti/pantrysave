@@ -34,6 +34,7 @@ const MapPage = () => {
   const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<PreviewItem | null>(null);
   const { data: dbListings } = useListings();
+  const { purchasedIds } = useOrders();
 
   useEffect(() => {
     if (!mapRef.current) return;
