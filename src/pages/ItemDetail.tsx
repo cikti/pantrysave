@@ -232,10 +232,15 @@ const ItemDetail = () => {
           </motion.div>
 
           {/* Pricing type label */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.28 }} className="mt-1">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.28 }} className="mt-1 flex items-center gap-2">
             <span className="text-[11px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
               {isFixed ? "Fixed price" : `Flexible — per ${item.unitType === "quantity" ? "unit" : item.unitType}`}
             </span>
+            {stockDisplay !== null && (
+              <span className="text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                Stock: {stockDisplay} {isWeightUnit ? weightUnit : "units"}
+              </span>
+            )}
           </motion.div>
 
           {isFixed && (
