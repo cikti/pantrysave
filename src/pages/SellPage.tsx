@@ -93,11 +93,12 @@ const SellPage = () => {
         .single();
       const sellerName = profile?.name || user.email?.split("@")[0] || "Seller";
 
-      const deliveryType = form.deliveryType === "pickup" ? "pickup" : "third_party";
-      const deliveryService = form.deliveryType !== "pickup" ? form.deliveryType : undefined;
+      const hasThirdParty = form.deliveryOptions.some(o => o !== "pickup");
+      const deliveryType = hasThirdParty ? "third_party" : "pickup";
+      const deliveryService = hasThirdParty ? form.deliveryOptions.find(o => o !== "pickup") : undefined;
 
-      // Set delivery fee for third-party
-      const deliveryFee = form.deliveryType === "grab" ? 8 : form.deliveryType === "lalamove" ? 6 : 0;
+      // Calculate max delivery fee from selected options
+      const deliveryFee = Math.max(0, ...form.deliveryOptions.map(o => form.deliveryFees[o] ?? DELIVERY_DEFAULTS[o].fee));
 
       // Build weight string for display
       const weightStr = form.pricingType === "fixed"
