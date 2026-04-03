@@ -25,8 +25,8 @@ const ItemDetail = () => {
   const { user } = useAuth();
   const [reserved, setReserved] = useState(false);
   const [showFloat, setShowFloat] = useState(false);
-  const [qty, setQty] = useState(1);
-  const [weightAmt, setWeightAmt] = useState(0.5);
+  const [_qty] = useState(1);
+  const [_weightAmt] = useState(0.5);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   const imageScale = useTransform(scrollY, [0, 200], [1, 1.15]);
