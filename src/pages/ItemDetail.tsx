@@ -93,6 +93,9 @@ const ItemDetail = () => {
   const weightUnit = item?.unitType === "g" ? "g" : "kg";
   const maxAmount = item?.maxQuantity ?? undefined;
 
+  // Show stock availability for all items
+  const stockDisplay = stockLeft !== null ? stockLeft : (item?.maxQuantity ?? null);
+
   if (!item) {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
@@ -107,7 +110,7 @@ const ItemDetail = () => {
   // Calculate subtotal
   let subtotal: number;
   if (isFixed) {
-    subtotal = item.discountPrice;
+    subtotal = item.discountPrice * qty;
   } else if (isFlexible && isWeightUnit) {
     const perUnit = item.pricePerUnit ?? item.discountPrice;
     subtotal = perUnit * weightAmt * (weightUnit === "g" ? 0.001 : 1);
@@ -126,17 +129,17 @@ const ItemDetail = () => {
     if (reserved) return;
 
     if (isFixed) {
-      // Fixed item — add as-is
+      // Fixed item — add with selected qty
       if (isDbListing && dbId) {
-        await addToCart(dbId, 1, undefined, 1);
+        await addToCart(dbId, qty, undefined, maxAmount);
       } else if (mockItem && id) {
-        await addToCart(id, 1, {
+        await addToCart(id, qty, {
           name: item.name,
           image_url: item.image,
           discount_price: item.discountPrice,
           original_price: item.originalPrice,
           weight: item.weight,
-        }, 1);
+        }, maxAmount);
       }
     } else if (isFlexible && isWeightUnit) {
       // Flexible weight — store subtotal as price, 1 qty
@@ -229,10 +232,15 @@ const ItemDetail = () => {
           </motion.div>
 
           {/* Pricing type label */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.28 }} className="mt-1">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.28 }} className="mt-1 flex items-center gap-2">
             <span className="text-[11px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
               {isFixed ? "Fixed price" : `Flexible — per ${item.unitType === "quantity" ? "unit" : item.unitType}`}
             </span>
+            {stockDisplay !== null && (
+              <span className="text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                Stock: {stockDisplay} {isWeightUnit ? weightUnit : "units"}
+              </span>
+            )}
           </motion.div>
 
           {isFixed && (
@@ -314,10 +322,10 @@ const ItemDetail = () => {
         )}
 
         <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border z-30 p-4">
-          {/* Quantity / Weight selector — only for flexible */}
-          {!reserved && isFlexible && (
+          {/* Quantity / Weight selector — for all items */}
+          {!reserved && !isSold && (isFlexible || isFixed) && (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-3">
-              {isWeightUnit ? (
+              {isFlexible && isWeightUnit ? (
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-medium text-muted-foreground">Weight:</span>
                   <div className="flex items-center gap-1.5 bg-muted rounded-xl px-1 py-1">
@@ -356,10 +364,11 @@ const ItemDetail = () => {
                     <button
                       onClick={() => setQty((v) => {
                         const next = v + 1;
-                        if (maxAmount && next > maxAmount) { toast.error(`Max available: ${maxAmount}`); return v; }
+                        const limit = maxAmount ?? Infinity;
+                        if (next > limit) { toast.error(`Max available: ${limit} ${isWeightUnit ? weightUnit : "units"}`); return v; }
                         return next;
                       })}
-                      className={`w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm ${maxAmount && qty >= maxAmount ? "opacity-40" : ""}`}
+                      className={`w-8 h-8 rounded-lg bg-card flex items-center justify-center active:scale-90 transition-transform shadow-sm ${maxAmount && qty >= (maxAmount) ? "opacity-40" : ""}`}
                     >
                       <Plus size={14} />
                     </button>
