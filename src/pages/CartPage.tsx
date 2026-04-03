@@ -371,7 +371,6 @@ const CartPage = () => {
               </AnimatePresence>
             </div>
           )}
-        )}
 
         {items.length > 0 && !showCheckout && (
           <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border p-4 z-30">
