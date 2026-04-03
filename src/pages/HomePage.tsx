@@ -9,7 +9,6 @@ import { useNavigate } from "react-router-dom";
 import { useListings } from "@/hooks/useListings";
 import { useCart } from "@/contexts/CartContext";
 import { useChat } from "@/contexts/ChatContext";
-import { useOrders } from "@/contexts/OrderContext";
 import { useTotalUnread } from "@/hooks/useChat";
 import type { GroceryItem } from "@/data/mockData";
 import MyOrders from "@/components/MyOrders";
