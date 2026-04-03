@@ -77,8 +77,19 @@ const HomePage = () => {
 
   const allItems = useMemo(() => [...groceryItems, ...dbItems], [dbItems]);
 
+  // Filter out items that are already in the cart
+  const { items: cartItems } = useCart();
+  const cartListingIds = useMemo(() => new Set(cartItems.map((ci) => ci.listing_id)), [cartItems]);
+
+  const shopItems = useMemo(() => allItems.filter((item) => {
+    // For mock items, the listing_id in cart matches the item.id
+    // For db items, the listing_id in cart matches the uuid (without "db-" prefix)
+    const rawId = item.id.startsWith("db-") ? item.id.replace("db-", "") : item.id;
+    return !cartListingIds.has(rawId);
+  }), [allItems, cartListingIds]);
+
   const filtered = useMemo(() => {
-    let items = activeCategory === "All" ? allItems : allItems.filter((i) => i.category === activeCategory);
+    let items = activeCategory === "All" ? shopItems : shopItems.filter((i) => i.category === activeCategory);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       items = items.filter(
