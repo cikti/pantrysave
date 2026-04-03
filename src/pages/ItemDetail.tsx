@@ -20,7 +20,7 @@ const badgeColors: Record<string, string> = {
 const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addToCart, items: cartItems } = useCart();
   const { openChat } = useChat();
   const { user } = useAuth();
   const [reserved, setReserved] = useState(false);
@@ -95,13 +95,22 @@ const ItemDetail = () => {
   const saving = (item.originalPrice - item.discountPrice).toFixed(2);
   const discount = Math.round(((item.originalPrice - item.discountPrice) / item.originalPrice) * 100);
 
+  // Check if already in cart
+  const cartListingId = isDbListing && dbId ? dbId : id;
+  const isInCart = cartItems.some((ci) => ci.listing_id === cartListingId && !ci.isSold);
+
   // Price display label
   const priceLabel = item.pricingType === "flexible" && item.pricePerUnit
     ? `RM${item.pricePerUnit.toFixed(2)} / ${item.unitType === "quantity" ? "unit" : item.unitType}`
     : null;
 
   const handleReserve = async () => {
-    if (reserved) return;
+    if (reserved || isInCart) {
+      if (isInCart) {
+        navigate("/cart");
+      }
+      return;
+    }
 
     if (isDbListing && dbId) {
       await addToCart(dbId, 1, undefined, 1);
@@ -262,15 +271,22 @@ const ItemDetail = () => {
           <motion.button
             onClick={handleReserve}
             disabled={isSold}
-            whileTap={!reserved && !isSold ? { scale: 0.96 } : {}}
+            whileTap={!reserved && !isSold && !isInCart ? { scale: 0.96 } : {}}
             className={`w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-colors duration-300 ${
               isSold
                 ? "bg-muted text-muted-foreground cursor-not-allowed"
-                : reserved ? "bg-accent text-primary" : "bg-primary text-primary-foreground"
+                : isInCart
+                  ? "bg-amber-400 text-amber-900"
+                  : reserved ? "bg-accent text-primary" : "bg-primary text-primary-foreground"
             }`}
           >
             {isSold ? (
               "Sold Out"
+            ) : isInCart ? (
+              <>
+                <ShoppingCart size={18} />
+                Already in Cart — View Cart
+              </>
             ) : reserved ? (
               <>
                 <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>

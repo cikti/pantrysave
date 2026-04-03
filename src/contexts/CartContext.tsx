@@ -115,16 +115,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const items = [...dbItems, ...mockItems];
 
   const addToCart = async (listingId: string, quantity = 1, mockData?: CartItem["listing"], maxQuantity?: number) => {
+    // Check if already in cart (prevent duplicates)
+    const allCurrentItems = [...dbItems, ...mockItems];
+    const alreadyInCart = allCurrentItems.find((i) => i.listing_id === listingId && !i.isSold);
+    if (alreadyInCart) {
+      toast.error("This item is already in your cart");
+      return;
+    }
+
     // Mock item (not in DB)
     if (mockData) {
       setMockItems((prev) => {
-        const existing = prev.find((i) => i.listing_id === listingId);
-        let updated: CartItem[];
-        if (existing) {
-          updated = prev.map((i) => i.listing_id === listingId ? { ...i, quantity: i.quantity + quantity } : i);
-        } else {
-          updated = [...prev, { id: `mock-${listingId}`, listing_id: listingId, quantity, isMock: true, listing: mockData, maxQuantity }];
-        }
+        const updated = [...prev, { id: `mock-${listingId}`, listing_id: listingId, quantity, isMock: true, listing: mockData, maxQuantity }];
         saveMockCart(updated);
         return updated;
       });
@@ -134,11 +136,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     // DB item
     if (!user) { toast.error("Please log in first"); return; }
-    const existing = dbItems.find((i) => i.listing_id === listingId);
-    if (existing) {
-      await updateQuantity(listingId, existing.quantity + quantity);
-      return;
-    }
     await supabase.from("cart_items").insert({ user_id: user.id, listing_id: listingId, quantity });
     toast.success("Added to cart 🛒");
     fetchCart();
