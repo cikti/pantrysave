@@ -129,17 +129,17 @@ const ItemDetail = () => {
     if (reserved) return;
 
     if (isFixed) {
-      // Fixed item — add as-is
+      // Fixed item — add with selected qty
       if (isDbListing && dbId) {
-        await addToCart(dbId, 1, undefined, 1);
+        await addToCart(dbId, qty, undefined, maxAmount);
       } else if (mockItem && id) {
-        await addToCart(id, 1, {
+        await addToCart(id, qty, {
           name: item.name,
           image_url: item.image,
           discount_price: item.discountPrice,
           original_price: item.originalPrice,
           weight: item.weight,
-        }, 1);
+        }, maxAmount);
       }
     } else if (isFlexible && isWeightUnit) {
       // Flexible weight — store subtotal as price, 1 qty
