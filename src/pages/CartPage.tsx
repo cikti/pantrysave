@@ -242,6 +242,7 @@ const CartPage = () => {
 
             {items.map((item, idx) => {
               const isSelected = selectedIds.has(item.listing_id);
+              const isSold = !!item.isSold;
               return (
                 <motion.div
                   key={item.id}
@@ -249,17 +250,22 @@ const CartPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
                   className={`flex gap-3 rounded-xl p-3 border-2 transition-colors ${
-                    isSelected
-                      ? "border-primary/40 bg-primary/5"
-                      : "border-border bg-card"
+                    isSold
+                      ? "border-destructive/30 bg-muted/60 opacity-60"
+                      : isSelected
+                        ? "border-primary/40 bg-primary/5"
+                        : "border-border bg-card"
                   }`}
                 >
                   {/* Checkbox */}
                   <button
                     onClick={() => toggleSelect(item.listing_id)}
                     className="self-center shrink-0"
+                    disabled={isSold}
                   >
-                    {isSelected ? (
+                    {isSold ? (
+                      <Square size={20} className="text-muted-foreground/40" />
+                    ) : isSelected ? (
                       <CheckSquare size={20} className="text-primary" />
                     ) : (
                       <Square size={20} className="text-muted-foreground" />
@@ -267,23 +273,39 @@ const CartPage = () => {
                   </button>
 
                   {item.listing?.image_url ? (
-                    <img src={item.listing.image_url} alt={item.listing?.name} className="w-20 h-20 rounded-lg object-cover shrink-0" />
+                    <img src={item.listing.image_url} alt={item.listing?.name} className={`w-20 h-20 rounded-lg object-cover shrink-0 ${isSold ? "grayscale" : ""}`} />
                   ) : (
                     <div className="w-20 h-20 rounded-lg bg-muted shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-foreground truncate">{item.listing?.name || "Item"}</p>
+                    <div className="flex items-center gap-2">
+                      <p className={`font-semibold text-sm truncate ${isSold ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                        {item.listing?.name || "Item"}
+                      </p>
+                      {isSold && (
+                        <span className="shrink-0 text-[10px] font-bold bg-destructive text-destructive-foreground px-1.5 py-0.5 rounded-full">
+                          SOLD
+                        </span>
+                      )}
+                    </div>
+                    {isSold && (
+                      <p className="text-[11px] text-destructive mt-0.5">
+                        This item has been purchased by another user
+                      </p>
+                    )}
                     {item.listing?.weight && (
-                      <p className="text-xs text-muted-foreground">{item.listing.weight}</p>
+                      <p className={`text-xs ${isSold ? "text-muted-foreground/60" : "text-muted-foreground"}`}>{item.listing.weight}</p>
                     )}
                     <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-primary font-bold text-sm">RM{(item.listing?.discount_price || 0).toFixed(2)}</span>
-                      {item.listing?.original_price && (
+                      <span className={`font-bold text-sm ${isSold ? "text-muted-foreground line-through" : "text-primary"}`}>
+                        RM{(item.listing?.discount_price || 0).toFixed(2)}
+                      </span>
+                      {item.listing?.original_price && !isSold && (
                         <span className="text-xs text-muted-foreground line-through">RM{item.listing.original_price.toFixed(2)}</span>
                       )}
                     </div>
                     <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-muted-foreground">
+                      <span className={`text-xs ${isSold ? "text-muted-foreground/60" : "text-muted-foreground"}`}>
                         Qty: {item.listing?.weight || item.quantity}
                       </span>
                       <button onClick={() => setConfirmRemove(item.listing_id)} className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
