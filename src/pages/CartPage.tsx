@@ -266,6 +266,9 @@ const CartPage = () => {
                 </motion.div>
               );
             })}
+          </div>
+        )}
+
           {/* Voucher Section */}
           {selectedCount > 0 && (
             <div className="px-4 pb-3">
