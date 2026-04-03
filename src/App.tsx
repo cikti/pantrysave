@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { ChatProvider } from "@/contexts/ChatContext";
+import { OrderProvider } from "@/contexts/OrderContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import ItemDetail from "./pages/ItemDetail";
@@ -18,6 +19,7 @@ import MapPage from "./pages/MapPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import NotFound from "./pages/NotFound";
+import MyOrdersPage from "./pages/MyOrdersPage";
 import AppLayout from "./components/AppLayout";
 
 const queryClient = new QueryClient();
@@ -31,6 +33,7 @@ const App = () => (
         <AuthProvider>
           <CartProvider>
           <ChatProvider>
+          <OrderProvider>
           <AppLayout>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -56,10 +59,12 @@ const App = () => (
                 }
               />
               <Route path="/points" element={<ProtectedRoute><PointsPage /></ProtectedRoute>} />
+              <Route path="/orders" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>} />
               <Route path="/map" element={<MapPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AppLayout>
+          </OrderProvider>
           </ChatProvider>
           </CartProvider>
         </AuthProvider>

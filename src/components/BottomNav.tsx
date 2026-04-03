@@ -1,4 +1,4 @@
-import { ShoppingBag, MapPin, PlusCircle, ShoppingCart } from "lucide-react";
+import { ShoppingBag, MapPin, PlusCircle, ShoppingCart, ClipboardList } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useCart } from "@/contexts/CartContext";
@@ -8,6 +8,7 @@ const tabs = [
   { icon: MapPin, label: "Map", path: "/map" },
   { icon: PlusCircle, label: "Sell", path: "/sell" },
   { icon: ShoppingCart, label: "Cart", path: "/cart" },
+  { icon: ClipboardList, label: "Orders", path: "/orders" },
 ];
 
 const BottomNav = () => {
