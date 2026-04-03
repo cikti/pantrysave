@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { useListings } from "@/hooks/useListings";
 import { useCart } from "@/contexts/CartContext";
 import { useChat } from "@/contexts/ChatContext";
+import { useOrders } from "@/contexts/OrderContext";
 import { useTotalUnread } from "@/hooks/useChat";
 import type { GroceryItem } from "@/data/mockData";
 import MyOrders from "@/components/MyOrders";
@@ -40,6 +41,7 @@ const HomePage = () => {
   const { count: cartCount } = useCart();
   const { openChat } = useChat();
   const unreadCount = useTotalUnread();
+  const { purchasedIds } = useOrders();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -82,11 +84,12 @@ const HomePage = () => {
   const cartListingIds = useMemo(() => new Set(cartItems.map((ci) => ci.listing_id)), [cartItems]);
 
   const shopItems = useMemo(() => allItems.filter((item) => {
-    // For mock items, the listing_id in cart matches the item.id
-    // For db items, the listing_id in cart matches the uuid (without "db-" prefix)
     const rawId = item.id.startsWith("db-") ? item.id.replace("db-", "") : item.id;
-    return !cartListingIds.has(rawId);
-  }), [allItems, cartListingIds]);
+    // Hide items in cart OR already purchased
+    if (cartListingIds.has(rawId)) return false;
+    if (purchasedIds.has(rawId)) return false;
+    return true;
+  }), [allItems, cartListingIds, purchasedIds]);
 
   const filtered = useMemo(() => {
     let items = activeCategory === "All" ? shopItems : shopItems.filter((i) => i.category === activeCategory);
