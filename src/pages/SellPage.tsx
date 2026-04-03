@@ -8,7 +8,7 @@ import PageTransition from "@/components/PageTransition";
 import LocationPicker from "@/components/LocationPicker";
 import QuantityWeightInput from "@/components/sell/QuantityWeightInput";
 import ConditionInput from "@/components/sell/ConditionInput";
-import DeliveryInput, { type DeliveryOption } from "@/components/sell/DeliveryInput";
+import DeliveryInput, { type DeliveryOptionKey, DELIVERY_DEFAULTS } from "@/components/sell/DeliveryInput";
 import { useCreateListing } from "@/hooks/useListings";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
