@@ -115,6 +115,14 @@ const SellPage = () => {
         ? (form.unitType === "quantity" ? parseFloat(form.maxQuantity) : parseFloat(form.weightVal))
         : form.quantity;
 
+      // Build delivery_options JSON
+      const deliveryOptionsJson = form.deliveryOptions.map(key => ({
+        key,
+        label: DELIVERY_DEFAULTS[key].label,
+        fee: form.deliveryFees[key] ?? DELIVERY_DEFAULTS[key].fee,
+        estimatedTime: DELIVERY_DEFAULTS[key].time,
+      }));
+
       await createListing.mutateAsync({
         name: form.name,
         category: form.category || undefined,
@@ -137,7 +145,8 @@ const SellPage = () => {
         unit_type: form.pricingType === "flexible" ? form.unitType : "quantity",
         max_quantity: maxQty || undefined,
         stock_quantity: maxQty ? Math.floor(maxQty) : 1,
-      });
+        delivery_options: deliveryOptionsJson,
+      } as any);
 
       try { await incrementItemsListed.mutateAsync(1); } catch {}
       toast.success("You rescued this item! 🌿", {
