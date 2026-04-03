@@ -35,9 +35,7 @@ const CartPage = () => {
   const [showPointsFloat, setShowPointsFloat] = useState<number | null>(null);
 
   // Voucher state
-  const { data: allVouchers } = useVouchers();
   const { data: userVouchers } = useUserVouchers();
-  const claimVoucher = useClaimVoucher();
   const markVoucherUsed = useMarkVoucherUsed();
   const [selectedVoucherId, setSelectedVoucherId] = useState<string | null>(null);
   const [showVouchers, setShowVouchers] = useState(false);
