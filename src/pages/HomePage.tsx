@@ -12,7 +12,6 @@ import { useChat } from "@/contexts/ChatContext";
 import { useTotalUnread } from "@/hooks/useChat";
 import type { GroceryItem } from "@/data/mockData";
 import MyOrders from "@/components/MyOrders";
-import { useOrders } from "@/contexts/OrderContext";
 
 const STORAGE_KEY = "pantrysave_recent_searches";
 const MAX_RECENT = 6;
@@ -41,7 +40,6 @@ const HomePage = () => {
   const { count: cartCount } = useCart();
   const { openChat } = useChat();
   const unreadCount = useTotalUnread();
-  const { purchasedIds } = useOrders();
   
 
   useEffect(() => {
@@ -78,7 +76,7 @@ const HomePage = () => {
     }));
   }, [dbListings]);
 
-  const allItems = useMemo(() => [...groceryItems, ...dbItems].filter((i) => !purchasedIds.has(i.id)), [dbItems, purchasedIds]);
+  const allItems = useMemo(() => [...groceryItems, ...dbItems], [dbItems]);
 
   const filtered = useMemo(() => {
     let items = activeCategory === "All" ? allItems : allItems.filter((i) => i.category === activeCategory);

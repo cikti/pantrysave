@@ -9,7 +9,6 @@ import { useListings, useListingById } from "@/hooks/useListings";
 import { useCart } from "@/contexts/CartContext";
 import { useChat } from "@/contexts/ChatContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOrders } from "@/contexts/OrderContext";
 
 const badgeColors: Record<string, string> = {
   expiry: "bg-[hsl(var(--badge-expiry))] text-primary-foreground",
@@ -21,11 +20,10 @@ const badgeColors: Record<string, string> = {
 const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart, items: cartItems } = useCart();
+  const { addToCart } = useCart();
   const { openChat } = useChat();
   const { user } = useAuth();
   const [reserved, setReserved] = useState(false);
-  const { purchasedIds } = useOrders();
   const [showFloat, setShowFloat] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
@@ -39,10 +37,7 @@ const ItemDetail = () => {
   const dbItem = directDbItem || dbListings?.find((l) => l.id === dbId);
   const mockItem = !isDbListing ? groceryItems.find((i) => i.id === id) : null;
 
-  const isMockPurchased = !isDbListing && id ? purchasedIds.has(id) : false;
-  const isSold = dbItem?.status === "sold" || isMockPurchased;
-  const cartListingId = isDbListing ? dbId : id;
-  const isInCart = cartItems.some((ci) => ci.listing_id === cartListingId);
+  const isSold = dbItem?.status === "sold";
 
   // Normalize item data
   const item = mockItem
@@ -53,8 +48,8 @@ const ItemDetail = () => {
         weight: mockItem.weight,
         originalPrice: mockItem.originalPrice,
         discountPrice: mockItem.clearancePrice,
-        badge: isMockPurchased ? "SOLD" : mockItem.badge,
-        badgeType: isMockPurchased ? "sold" as const : mockItem.badgeType,
+        badge: mockItem.badge,
+        badgeType: mockItem.badgeType,
         reason: mockItem.reason,
         deliveryType: null as string | null,
         deliveryService: null as string | null,
@@ -265,23 +260,23 @@ const ItemDetail = () => {
 
         <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border z-30 p-4">
           <motion.button
-            onClick={isInCart && !reserved ? () => navigate("/cart") : handleReserve}
+            onClick={handleReserve}
             disabled={isSold}
             whileTap={!reserved && !isSold ? { scale: 0.96 } : {}}
             className={`w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-colors duration-300 ${
               isSold
                 ? "bg-muted text-muted-foreground cursor-not-allowed"
-                : isInCart || reserved ? "bg-accent text-primary" : "bg-primary text-primary-foreground"
+                : reserved ? "bg-accent text-primary" : "bg-primary text-primary-foreground"
             }`}
           >
             {isSold ? (
               "Sold Out"
-            ) : isInCart || reserved ? (
+            ) : reserved ? (
               <>
                 <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
                   <Check size={18} />
                 </motion.span>
-                {reserved ? "Added ✓" : "Already in Cart — View Cart"}
+                Added ✓
               </>
             ) : (
               <>
