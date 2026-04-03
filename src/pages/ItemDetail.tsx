@@ -78,7 +78,7 @@ const ItemDetail = () => {
 
   // Price display label
   const priceLabel = item.pricingType === "flexible" && item.pricePerUnit
-    ? `RM${item.pricePerUnit.toFixed(2)} / ${item.unitType === "quantity" ? "unit" : item.unitType}`
+    ? `RM${item.pricePerUnit.toFixed(2)}`
     : null;
 
   const handleReserve = async () => {
