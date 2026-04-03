@@ -59,10 +59,12 @@ const App = () => (
                 }
               />
               <Route path="/points" element={<ProtectedRoute><PointsPage /></ProtectedRoute>} />
+              <Route path="/orders" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>} />
               <Route path="/map" element={<MapPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AppLayout>
+          </OrderProvider>
           </ChatProvider>
           </CartProvider>
         </AuthProvider>
