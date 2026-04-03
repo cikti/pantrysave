@@ -204,6 +204,15 @@ const HomePage = () => {
             ))}
           </div>
         </div>
+        <div className="px-4 md:px-6 pt-2 pb-1">
+          <FilterSort
+            sort={sortOption}
+            priceFilter={priceFilter}
+            onSortChange={setSortOption}
+            onPriceFilterChange={setPriceFilter}
+            resultCount={filtered.length}
+          />
+        </div>
 
         <MyOrders />
 
