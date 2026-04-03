@@ -78,7 +78,7 @@ const HomePage = () => {
     }));
   }, [dbListings]);
 
-  const allItems = useMemo(() => [...groceryItems, ...dbItems], [dbItems]);
+  const allItems = useMemo(() => [...groceryItems, ...dbItems].filter((i) => !purchasedIds.has(i.id)), [dbItems, purchasedIds]);
 
   const filtered = useMemo(() => {
     let items = activeCategory === "All" ? allItems : allItems.filter((i) => i.category === activeCategory);
