@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import { useListings, type Listing } from "@/hooks/useListings";
+import { useOrders } from "@/contexts/OrderContext";
 import type { GroceryItem } from "@/data/mockData";
 
 const storeLocations: Record<string, [number, number]> = {
