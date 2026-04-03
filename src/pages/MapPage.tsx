@@ -94,26 +94,6 @@ const MapPage = () => {
 
     let markerIndex = 0;
 
-    groceryItems.forEach((item) => {
-      const pos = storeLocations[item.id];
-      if (!pos) return;
-      const idx = markerIndex++;
-      const marker = L.marker(pos, { icon: defaultIcon }).addTo(map);
-      animateMarker(marker, idx);
-      marker.on("click", () => {
-        setSelectedItem({
-          id: item.id,
-          name: item.name,
-          seller: item.seller,
-          image: item.image,
-          originalPrice: item.originalPrice,
-          discountPrice: item.clearancePrice,
-          lat: pos[0],
-          lng: pos[1],
-        });
-      });
-    });
-
     (dbListings || []).forEach((listing) => {
       if (!listing.latitude || !listing.longitude) return;
       const idx = markerIndex++;
