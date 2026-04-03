@@ -28,6 +28,7 @@ const CartPage = () => {
   const purchaseListing = usePurchaseListing();
   const { earnPoints } = usePoints();
   const { addOrder } = useOrders();
+  const { recordPurchase } = useImpact();
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [deliveryChoice, setDeliveryChoice] = useState<"pickup" | "grab" | "lalamove" | null>(null);
