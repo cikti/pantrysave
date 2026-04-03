@@ -1,17 +1,17 @@
 import { useState } from "react";
-import { Award, Coins, Leaf, Truck, Tag, TrendingUp, TrendingDown, Clock } from "lucide-react";
+import { Award, Coins, Leaf, Truck, Tag, TrendingUp, TrendingDown, Clock, Ticket, CheckCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { usePoints, PointTransaction } from "@/hooks/usePoints";
+import { useVouchers, useUserVouchers, useClaimVoucher, Voucher } from "@/hooks/useVouchers";
 import { useCountUp } from "@/hooks/useCountUp";
 import PageTransition from "@/components/PageTransition";
 
-const rewards = [
-  { id: "rm5", label: "RM5 Off Voucher", description: "Get RM5 off your next purchase", cost: 100, icon: Tag, emoji: "🎫" },
-  { id: "rm10", label: "RM10 Off Voucher", description: "Get RM10 off your next purchase", cost: 200, icon: Tag, emoji: "🎟️" },
-  { id: "free-delivery", label: "Free Delivery", description: "Free delivery on your next order", cost: 150, icon: Truck, emoji: "🚚" },
-  { id: "eco-badge", label: "Eco Champion Badge", description: "Exclusive profile badge", cost: 300, icon: Leaf, emoji: "🌿" },
-];
+const VOUCHER_POINT_COSTS: Record<string, number> = {
+  "10% Off": 100,
+  "RM5 Off (Min RM30)": 150,
+  "20% Off Welcome": 200,
+};
 
 const tiers = [
   { name: "Saver", min: 0, max: 200, color: "bg-muted" },
@@ -22,8 +22,11 @@ const tiers = [
 
 const PointsPage = () => {
   const { balance, transactions, redeemPoints } = usePoints();
+  const { data: allVouchers = [], isLoading: vouchersLoading } = useVouchers();
+  const { data: userVouchers = [] } = useUserVouchers();
+  const claimVoucher = useClaimVoucher();
   const [redeeming, setRedeeming] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"rewards" | "history">("rewards");
+  const [activeTab, setActiveTab] = useState<"vouchers" | "history">("vouchers");
 
   const animatedBalance = useCountUp(balance, 800, 0);
 
@@ -33,20 +36,53 @@ const PointsPage = () => {
     ? ((balance - currentTier.min) / (nextTier.min - currentTier.min)) * 100
     : 100;
 
-  const handleRedeem = async (reward: typeof rewards[0]) => {
-    if (balance < reward.cost) {
+  // Check if user already claimed a voucher
+  const isAlreadyClaimed = (voucherId: string) =>
+    userVouchers.some((uv) => uv.voucher_id === voucherId && !uv.is_used);
+
+  const handleClaimVoucher = async (voucher: Voucher) => {
+    const cost = VOUCHER_POINT_COSTS[voucher.name] ?? 100;
+
+    if (balance < cost) {
       toast.error("Not enough points!");
       return;
     }
-    setRedeeming(reward.id);
+    if (isAlreadyClaimed(voucher.id)) {
+      toast.error("You already have this voucher!");
+      return;
+    }
+
+    setRedeeming(voucher.id);
     try {
-      await redeemPoints.mutateAsync({ amount: reward.cost, description: `Redeemed ${reward.label}` });
-      toast.success(`🎉 Reward unlocked: ${reward.label}!`);
+      // Deduct points
+      await redeemPoints.mutateAsync({
+        amount: cost,
+        description: `Claimed voucher: ${voucher.name}`,
+      });
+      // Add to user's vouchers
+      await claimVoucher.mutateAsync(voucher.id);
+      toast.success("🎉 Voucher claimed! Check My Vouchers in Cart");
     } catch {
-      // error handled in hook
+      // error handled in hooks
     } finally {
       setRedeeming(null);
     }
+  };
+
+  const getVoucherEmoji = (v: Voucher) => {
+    if (v.discount_type === "percentage") return "🏷️";
+    return "🎫";
+  };
+
+  const getVoucherDescription = (v: Voucher) => {
+    const parts: string[] = [];
+    if (v.discount_type === "percentage") {
+      parts.push(`${v.discount_value}% off your purchase`);
+    } else {
+      parts.push(`RM${v.discount_value} off your purchase`);
+    }
+    if (v.min_spend > 0) parts.push(`Min spend: RM${v.min_spend}`);
+    return parts.join(" · ");
   };
 
   return (
@@ -54,7 +90,7 @@ const PointsPage = () => {
       <div className="min-h-screen pb-24 md:pb-8">
         <header className="px-5 pt-8 pb-4">
           <h1 className="text-lg font-bold text-foreground">My Points</h1>
-          <p className="text-xs text-muted-foreground mt-1">Earn, track & redeem rewards</p>
+          <p className="text-xs text-muted-foreground mt-1">Earn, track & redeem vouchers</p>
         </header>
 
         {/* Balance Card */}
@@ -79,7 +115,6 @@ const PointsPage = () => {
             Tier: <span className="font-semibold text-primary">{currentTier.name}</span>
           </p>
 
-          {/* Progress to next tier */}
           {nextTier && (
             <div className="mt-4">
               <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
@@ -97,7 +132,6 @@ const PointsPage = () => {
             </div>
           )}
 
-          {/* Decorative */}
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full" />
           <div className="absolute -right-2 -bottom-6 w-16 h-16 bg-primary/5 rounded-full" />
         </motion.div>
@@ -105,13 +139,13 @@ const PointsPage = () => {
         {/* Tabs */}
         <div className="px-5 flex gap-2 my-5">
           <button
-            onClick={() => setActiveTab("rewards")}
+            onClick={() => setActiveTab("vouchers")}
             className={`flex-1 text-xs font-medium py-2.5 rounded-xl transition-all ${
-              activeTab === "rewards" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
+              activeTab === "vouchers" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
             }`}
           >
-            <Award size={12} className="inline mr-1" />
-            Rewards
+            <Ticket size={12} className="inline mr-1" />
+            Claim Vouchers
           </button>
           <button
             onClick={() => setActiveTab("history")}
@@ -125,48 +159,98 @@ const PointsPage = () => {
         </div>
 
         <AnimatePresence mode="wait">
-          {activeTab === "rewards" ? (
+          {activeTab === "vouchers" ? (
             <motion.div
-              key="rewards"
+              key="vouchers"
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
               className="px-5 space-y-3"
             >
-              {rewards.map((reward, i) => {
-                const canAfford = balance >= reward.cost;
-                return (
-                  <motion.div
-                    key={reward.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.08 }}
-                    className={`bg-card rounded-2xl p-4 shadow-sm flex items-center gap-4 ${
-                      !canAfford ? "opacity-60" : ""
-                    }`}
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center text-2xl shrink-0">
-                      {reward.emoji}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground">{reward.label}</p>
-                      <p className="text-[11px] text-muted-foreground">{reward.description}</p>
-                      <p className="text-xs font-bold text-primary mt-1">{reward.cost} pts</p>
-                    </div>
-                    <button
-                      onClick={() => handleRedeem(reward)}
-                      disabled={!canAfford || redeeming === reward.id}
-                      className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
-                        canAfford
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground cursor-not-allowed"
+              {vouchersLoading ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Loading vouchers...</p>
+              ) : allVouchers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No vouchers available</p>
+              ) : (
+                allVouchers.map((voucher, i) => {
+                  const cost = VOUCHER_POINT_COSTS[voucher.name] ?? 100;
+                  const canAfford = balance >= cost;
+                  const alreadyClaimed = isAlreadyClaimed(voucher.id);
+
+                  return (
+                    <motion.div
+                      key={voucher.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08 }}
+                      className={`bg-card rounded-2xl p-4 shadow-sm flex items-center gap-4 ${
+                        !canAfford && !alreadyClaimed ? "opacity-60" : ""
                       }`}
                     >
-                      {redeeming === reward.id ? "..." : "Redeem"}
-                    </button>
-                  </motion.div>
-                );
-              })}
+                      <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center text-2xl shrink-0">
+                        {getVoucherEmoji(voucher)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">{voucher.name}</p>
+                        <p className="text-[11px] text-muted-foreground">{getVoucherDescription(voucher)}</p>
+                        <p className="text-[11px] text-muted-foreground">Code: {voucher.code}</p>
+                        <p className="text-xs font-bold text-primary mt-1">{cost} pts</p>
+                      </div>
+                      {alreadyClaimed ? (
+                        <div className="flex items-center gap-1 text-xs font-semibold text-primary">
+                          <CheckCircle size={14} />
+                          Claimed
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleClaimVoucher(voucher)}
+                          disabled={!canAfford || redeeming === voucher.id}
+                          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
+                            canAfford
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground cursor-not-allowed"
+                          }`}
+                        >
+                          {redeeming === voucher.id ? "..." : "Claim"}
+                        </button>
+                      )}
+                    </motion.div>
+                  );
+                })
+              )}
+
+              {/* My Vouchers section */}
+              {userVouchers.length > 0 && (
+                <div className="pt-4">
+                  <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                    <Tag size={14} className="text-primary" />
+                    My Vouchers ({userVouchers.length})
+                  </h3>
+                  {userVouchers.map((uv, i) => (
+                    <motion.div
+                      key={uv.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="bg-primary/5 rounded-xl p-3 flex items-center gap-3 mb-2"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-lg">
+                        🎫
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-foreground">{uv.voucher?.name ?? "Voucher"}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {uv.voucher?.discount_type === "percentage"
+                            ? `${uv.voucher.discount_value}% off`
+                            : `RM${uv.voucher?.discount_value} off`}
+                          {uv.voucher && uv.voucher.min_spend > 0 ? ` · Min RM${uv.voucher.min_spend}` : ""}
+                        </p>
+                      </div>
+                      <span className="text-[10px] text-primary font-medium">Use in Cart</span>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </motion.div>
           ) : (
             <motion.div
