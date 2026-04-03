@@ -38,7 +38,6 @@ const MyOrdersPage = () => {
     { key: "packing", label: "Packing" },
     { key: "shipped", label: "Shipped" },
     { key: "delivered", label: "Delivered" },
-    { key: "cancelled", label: "Cancelled" },
   ];
 
   const formatDate = (iso: string) => {
