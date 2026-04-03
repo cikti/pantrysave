@@ -31,11 +31,12 @@ const CartPage = () => {
   const { recordPurchase } = useImpact();
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
-  const [deliveryChoice, setDeliveryChoice] = useState<"pickup" | "grab" | "lalamove" | null>(null);
+  const [deliveryChoice, setDeliveryChoice] = useState<string | null>(null);
   const [orderComplete, setOrderComplete] = useState(false);
   const [showFPX, setShowFPX] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showPointsFloat, setShowPointsFloat] = useState<number | null>(null);
+  const [buyerPos, setBuyerPos] = useState<[number, number] | null>(null);
 
   // Voucher state
   const { data: userVouchers } = useUserVouchers();
