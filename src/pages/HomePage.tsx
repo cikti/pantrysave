@@ -11,6 +11,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useChat } from "@/contexts/ChatContext";
 import { useTotalUnread } from "@/hooks/useChat";
 import type { GroceryItem } from "@/data/mockData";
+import MyOrders from "@/components/MyOrders";
 
 const STORAGE_KEY = "pantrysave_recent_searches";
 const MAX_RECENT = 6;
@@ -181,6 +182,8 @@ const HomePage = () => {
             ))}
           </div>
         </div>
+
+        <MyOrders />
 
         <main className="px-4 md:px-6 mt-4">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
