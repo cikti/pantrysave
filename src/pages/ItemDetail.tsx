@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, ShoppingCart, Info, Check, MapPin, Truck, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
-import { toast } from "sonner";
 import { motion, useScroll, useTransform } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import { useListings, useListingById } from "@/hooks/useListings";
