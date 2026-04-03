@@ -25,6 +25,7 @@ const ItemDetail = () => {
   const { openChat } = useChat();
   const { user } = useAuth();
   const [reserved, setReserved] = useState(false);
+  const { purchasedIds } = useOrders();
   const [showFloat, setShowFloat] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
