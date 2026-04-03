@@ -41,6 +41,7 @@ const HomePage = () => {
   const { count: cartCount } = useCart();
   const { openChat } = useChat();
   const unreadCount = useTotalUnread();
+  const { purchasedIds } = useOrders();
   
 
   useEffect(() => {

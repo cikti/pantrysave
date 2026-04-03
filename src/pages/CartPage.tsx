@@ -176,6 +176,8 @@ const CartPage = () => {
       await earnPoints.mutateAsync({ amount: pointsEarned, description: `Purchase of ${selectedCount} item${selectedCount > 1 ? "s" : ""}` });
       setShowPointsFloat(pointsEarned);
     } catch {}
+    // Mark items as purchased (for mock items that aren't in DB)
+    markPurchased(selectedItems.map((i) => i.listing_id));
     // Remove only selected items from cart
     for (const item of selectedItems) {
       await removeFromCart(item.listing_id);
