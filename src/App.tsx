@@ -19,6 +19,7 @@ import MapPage from "./pages/MapPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import NotFound from "./pages/NotFound";
+import MyOrdersPage from "./pages/MyOrdersPage";
 import AppLayout from "./components/AppLayout";
 
 const queryClient = new QueryClient();
