@@ -8,6 +8,7 @@ const tabs = [
   { icon: MapPin, label: "Map", path: "/map" },
   { icon: PlusCircle, label: "Sell", path: "/sell" },
   { icon: ShoppingCart, label: "Cart", path: "/cart" },
+  { icon: ClipboardList, label: "Orders", path: "/orders" },
 ];
 
 const BottomNav = () => {
