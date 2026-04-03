@@ -2,6 +2,7 @@ import { useMyListings, useUpdateListingStatus, useDeleteListing, type Listing }
 import { Trash2, CheckCircle, Package, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { useImpact } from "@/hooks/useImpact";
 
 const statusColors: Record<string, string> = {
   available: "bg-primary/10 text-primary",
