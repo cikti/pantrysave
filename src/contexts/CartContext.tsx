@@ -9,6 +9,7 @@ export interface CartItem {
   quantity: number;
   maxQuantity?: number;
   isMock?: boolean;
+  isSold?: boolean;
   listing?: {
     name: string;
     image_url: string | null;
