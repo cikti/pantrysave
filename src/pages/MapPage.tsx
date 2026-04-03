@@ -110,7 +110,7 @@ const MapPage = () => {
       map.remove();
       mapInstance.current = null;
     };
-  }, [dbListings]);
+  }, [dbListings, purchasedIds]);
 
   const handlePreviewClick = () => {
     if (!selectedItem) return;
