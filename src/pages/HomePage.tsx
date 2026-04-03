@@ -12,6 +12,7 @@ import { useChat } from "@/contexts/ChatContext";
 import { useTotalUnread } from "@/hooks/useChat";
 import type { GroceryItem } from "@/data/mockData";
 import MyOrders from "@/components/MyOrders";
+import FilterSort, { type SortOption, type PriceFilter } from "@/components/FilterSort";
 
 const STORAGE_KEY = "pantrysave_recent_searches";
 const MAX_RECENT = 6;
@@ -31,6 +32,8 @@ const HomePage = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [showRecent, setShowRecent] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>("default");
+  const [priceFilter, setPriceFilter] = useState<PriceFilter>("all");
   
   const [recentSearches, setRecentSearches] = useState<string[]>(getRecentSearches);
   const isMobile = useIsMobile();
@@ -91,8 +94,26 @@ const HomePage = () => {
           i.badge.toLowerCase().includes(q)
       );
     }
+    // Price filter
+    const priceMax: Record<PriceFilter, number> = { all: Infinity, under5: 5, under10: 10, under20: 20, under50: 50 };
+    if (priceFilter !== "all") {
+      items = items.filter((i) => i.clearancePrice <= priceMax[priceFilter]);
+    }
+    // Sort
+    if (sortOption === "price-asc") items = [...items].sort((a, b) => a.clearancePrice - b.clearancePrice);
+    else if (sortOption === "price-desc") items = [...items].sort((a, b) => b.clearancePrice - a.clearancePrice);
+    else if (sortOption === "name-az") items = [...items].sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortOption === "expiry") {
+      items = [...items].sort((a, b) => {
+        const aExp = a.badge.match(/(\d+)\s*Day/i);
+        const bExp = b.badge.match(/(\d+)\s*Day/i);
+        const aVal = aExp ? parseInt(aExp[1]) : 9999;
+        const bVal = bExp ? parseInt(bExp[1]) : 9999;
+        return aVal - bVal;
+      });
+    }
     return items;
-  }, [activeCategory, searchQuery, allItems]);
+  }, [activeCategory, searchQuery, allItems, sortOption, priceFilter]);
 
   return (
     <PageTransition>
@@ -182,6 +203,15 @@ const HomePage = () => {
               </button>
             ))}
           </div>
+        </div>
+        <div className="px-4 md:px-6 pt-2 pb-1">
+          <FilterSort
+            sort={sortOption}
+            priceFilter={priceFilter}
+            onSortChange={setSortOption}
+            onPriceFilterChange={setPriceFilter}
+            resultCount={filtered.length}
+          />
         </div>
 
         <MyOrders />
