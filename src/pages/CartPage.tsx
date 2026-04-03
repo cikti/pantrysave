@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
-import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info, Square, CheckSquare } from "lucide-react";
+import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info, Square, CheckSquare, Tag, ChevronDown, ChevronUp } from "lucide-react";
 import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePurchaseListing } from "@/hooks/useListings";
 import { usePoints } from "@/hooks/usePoints";
 import { useOrders } from "@/contexts/OrderContext";
+import { useVouchers, useUserVouchers, useClaimVoucher, useMarkVoucherUsed, calculateDiscount, Voucher } from "@/hooks/useVouchers";
 import { toast } from "sonner";
 import PageTransition from "@/components/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
