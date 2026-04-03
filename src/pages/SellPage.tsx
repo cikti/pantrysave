@@ -12,6 +12,7 @@ import DeliveryInput, { type DeliveryOption } from "@/components/sell/DeliveryIn
 import { useCreateListing } from "@/hooks/useListings";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useImpact } from "@/hooks/useImpact";
 
 const steps = ["Photo", "Details", "Location", "Pricing"];
 
