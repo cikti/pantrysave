@@ -8,7 +8,7 @@ import PageTransition from "@/components/PageTransition";
 import LocationPicker from "@/components/LocationPicker";
 import QuantityWeightInput from "@/components/sell/QuantityWeightInput";
 import ConditionInput from "@/components/sell/ConditionInput";
-import DeliveryInput, { type DeliveryOption } from "@/components/sell/DeliveryInput";
+import DeliveryInput, { type DeliveryOptionKey, DELIVERY_DEFAULTS } from "@/components/sell/DeliveryInput";
 import { useCreateListing } from "@/hooks/useListings";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +33,8 @@ const SellPage = () => {
     expiryDays: 3,
     originalPrice: "",
     discountPrice: "",
-    deliveryType: "pickup" as DeliveryOption,
+    deliveryOptions: ["pickup"] as DeliveryOptionKey[],
+    deliveryFees: {} as Partial<Record<DeliveryOptionKey, number>>,
     latitude: null as number | null,
     longitude: null as number | null,
     address: "",
@@ -92,11 +93,12 @@ const SellPage = () => {
         .single();
       const sellerName = profile?.name || user.email?.split("@")[0] || "Seller";
 
-      const deliveryType = form.deliveryType === "pickup" ? "pickup" : "third_party";
-      const deliveryService = form.deliveryType !== "pickup" ? form.deliveryType : undefined;
+      const hasThirdParty = form.deliveryOptions.some(o => o !== "pickup");
+      const deliveryType = hasThirdParty ? "third_party" : "pickup";
+      const deliveryService = hasThirdParty ? form.deliveryOptions.find(o => o !== "pickup") : undefined;
 
-      // Set delivery fee for third-party
-      const deliveryFee = form.deliveryType === "grab" ? 8 : form.deliveryType === "lalamove" ? 6 : 0;
+      // Calculate max delivery fee from selected options
+      const deliveryFee = Math.max(0, ...form.deliveryOptions.map(o => form.deliveryFees[o] ?? DELIVERY_DEFAULTS[o].fee));
 
       // Build weight string for display
       const weightStr = form.pricingType === "fixed"
@@ -112,6 +114,14 @@ const SellPage = () => {
       const maxQty = form.pricingType === "flexible"
         ? (form.unitType === "quantity" ? parseFloat(form.maxQuantity) : parseFloat(form.weightVal))
         : form.quantity;
+
+      // Build delivery_options JSON
+      const deliveryOptionsJson = form.deliveryOptions.map(key => ({
+        key,
+        label: DELIVERY_DEFAULTS[key].label,
+        fee: form.deliveryFees[key] ?? DELIVERY_DEFAULTS[key].fee,
+        estimatedTime: DELIVERY_DEFAULTS[key].time,
+      }));
 
       await createListing.mutateAsync({
         name: form.name,
@@ -135,7 +145,8 @@ const SellPage = () => {
         unit_type: form.pricingType === "flexible" ? form.unitType : "quantity",
         max_quantity: maxQty || undefined,
         stock_quantity: maxQty ? Math.floor(maxQty) : 1,
-      });
+        delivery_options: deliveryOptionsJson,
+      } as any);
 
       try { await incrementItemsListed.mutateAsync(1); } catch {}
       toast.success("You rescued this item! 🌿", {
@@ -286,8 +297,10 @@ const SellPage = () => {
 
           {/* Delivery type */}
           <DeliveryInput
-            value={form.deliveryType}
-            onChange={(v) => update("deliveryType", v)}
+            selected={form.deliveryOptions}
+            onChange={(v) => update("deliveryOptions", v)}
+            fees={form.deliveryFees}
+            onFeeChange={(key, fee) => update("deliveryFees", { ...form.deliveryFees, [key]: fee })}
           />
 
           {form.pricingType === "fixed" ? (

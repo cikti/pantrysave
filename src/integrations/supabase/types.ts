@@ -92,6 +92,7 @@ export type Database = {
           condition: string | null
           created_at: string
           delivery_fee: number | null
+          delivery_options: Json | null
           delivery_service: string | null
           delivery_type: Database["public"]["Enums"]["delivery_type"]
           discount_price: number
@@ -120,6 +121,7 @@ export type Database = {
           condition?: string | null
           created_at?: string
           delivery_fee?: number | null
+          delivery_options?: Json | null
           delivery_service?: string | null
           delivery_type?: Database["public"]["Enums"]["delivery_type"]
           discount_price: number
@@ -148,6 +150,7 @@ export type Database = {
           condition?: string | null
           created_at?: string
           delivery_fee?: number | null
+          delivery_options?: Json | null
           delivery_service?: string | null
           delivery_type?: Database["public"]["Enums"]["delivery_type"]
           discount_price?: number

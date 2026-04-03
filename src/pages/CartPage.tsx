@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info, Square, CheckSquare, Tag, X } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info, Square, CheckSquare, Tag, X, AlertTriangle, Clock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +21,14 @@ const DELIVERY_FEES: Record<string, { fee: number; label: string }> = {
   pickup: { fee: 0, label: "Self Pickup" },
 };
 
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 const CartPage = () => {
   const { items, count, total, loading, removeFromCart, updateQuantity, clearCart } = useCart();
   const { user } = useAuth();
@@ -31,11 +39,12 @@ const CartPage = () => {
   const { recordPurchase } = useImpact();
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
-  const [deliveryChoice, setDeliveryChoice] = useState<"pickup" | "grab" | "lalamove" | null>(null);
+  const [deliveryChoice, setDeliveryChoice] = useState<string | null>(null);
   const [orderComplete, setOrderComplete] = useState(false);
   const [showFPX, setShowFPX] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showPointsFloat, setShowPointsFloat] = useState<number | null>(null);
+  const [buyerPos, setBuyerPos] = useState<[number, number] | null>(null);
 
   // Voucher state
   const { data: userVouchers } = useUserVouchers();
@@ -43,8 +52,17 @@ const CartPage = () => {
   const [selectedVoucherId, setSelectedVoucherId] = useState<string | null>(null);
   const [showVouchers, setShowVouchers] = useState(false);
 
+  // Get buyer location for distance alerts
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setBuyerPos([pos.coords.latitude, pos.coords.longitude]),
+        () => {}
+      );
+    }
+  }, []);
+
   const toggleSelect = (id: string) => {
-    // Don't allow selecting sold items
     const item = items.find((i) => i.listing_id === id);
     if (item?.isSold) return;
     setSelectedIds((prev) => {
@@ -57,11 +75,8 @@ const CartPage = () => {
   const availableItems = items.filter((i) => !i.isSold);
   const allSelected = availableItems.length > 0 && availableItems.every((i) => selectedIds.has(i.listing_id));
   const toggleAll = () => {
-    if (allSelected) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(availableItems.map((i) => i.listing_id)));
-    }
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(availableItems.map((i) => i.listing_id)));
   };
 
   const selectedItems = useMemo(() => items.filter((i) => selectedIds.has(i.listing_id) && !i.isSold), [items, selectedIds]);
@@ -71,7 +86,6 @@ const CartPage = () => {
   );
   const selectedCount = selectedItems.length;
 
-  // Voucher discount
   const selectedVoucher = useMemo(() => {
     if (!selectedVoucherId) return null;
     const uv = userVouchers?.find((v) => v.id === selectedVoucherId);
@@ -84,7 +98,60 @@ const CartPage = () => {
     return calculateDiscount(selectedVoucher.voucher, selectedTotal);
   }, [selectedVoucher, selectedTotal]);
 
-  const deliveryFee = deliveryChoice ? DELIVERY_FEES[deliveryChoice].fee : 0;
+  // Available delivery options based on sellers
+  const availableDeliveryOptions = useMemo(() => {
+    const allOptions = new Map<string, { key: string; label: string; fee: number; estimatedTime: string }>();
+    for (const item of selectedItems) {
+      const listing = item.listing as any;
+      const opts = listing?.delivery_options;
+      if (Array.isArray(opts) && opts.length > 0) {
+        for (const opt of opts) {
+          if (!allOptions.has(opt.key)) allOptions.set(opt.key, opt);
+        }
+      } else {
+        const dt = listing?.delivery_type;
+        if (dt === "pickup" || !dt) {
+          allOptions.set("pickup", { key: "pickup", label: "Self Pickup", fee: 0, estimatedTime: "Ready in 1 hour" });
+        }
+        if (dt === "third_party") {
+          const svc = listing?.delivery_service || "grab";
+          allOptions.set(svc, {
+            key: svc,
+            label: DELIVERY_FEES[svc]?.label || svc,
+            fee: listing?.delivery_fee || DELIVERY_FEES[svc]?.fee || 6,
+            estimatedTime: svc === "grab" ? "1-2 hours" : "1-3 hours",
+          });
+        }
+      }
+    }
+    if (allOptions.size === 0) {
+      return [
+        { key: "pickup", label: "Self Pickup", fee: 0, estimatedTime: "Ready in 1 hour" },
+        { key: "grab", label: "GrabExpress", fee: 8, estimatedTime: "1-2 hours" },
+        { key: "lalamove", label: "Lalamove", fee: 6, estimatedTime: "1-3 hours" },
+      ];
+    }
+    return [...allOptions.values()];
+  }, [selectedItems]);
+
+  // Distance to seller for pickup alert
+  const distanceInfo = useMemo(() => {
+    if (!buyerPos || deliveryChoice !== "pickup") return null;
+    let maxDist = 0;
+    for (const item of selectedItems) {
+      const lat = (item.listing as any)?.latitude;
+      const lng = (item.listing as any)?.longitude;
+      if (lat && lng) {
+        const d = haversineKm(buyerPos[0], buyerPos[1], lat, lng);
+        if (d > maxDist) maxDist = d;
+      }
+    }
+    if (maxDist === 0) return null;
+    return { distance: maxDist };
+  }, [buyerPos, deliveryChoice, selectedItems]);
+
+  const chosenOption = availableDeliveryOptions.find((o) => o.key === deliveryChoice);
+  const deliveryFee = chosenOption?.fee ?? 0;
   const grandTotal = Math.max(0, selectedTotal - voucherDiscount + deliveryFee);
 
   if (!user) {
@@ -106,6 +173,7 @@ const CartPage = () => {
       toast.error("Please remove sold-out items before checking out");
       return;
     }
+    setDeliveryChoice(null);
     setShowCheckout(true);
   };
 
@@ -115,11 +183,9 @@ const CartPage = () => {
     setShowFPX(true);
   };
 
-
   const handlePaymentSuccess = async (_paymentUrl: string) => {
     setShowFPX(false);
 
-    // Concurrency check: verify stock before processing
     const soldOutItems: string[] = [];
     for (const item of selectedItems) {
       if (!item.isMock) {
@@ -138,7 +204,6 @@ const CartPage = () => {
       return;
     }
 
-    // Decrement stock and mark sold if stock reaches 0
     for (const item of selectedItems) {
       if (!item.isMock) {
         try {
@@ -150,14 +215,12 @@ const CartPage = () => {
       }
     }
 
-    // Mark voucher as used
     if (selectedVoucher?.userVoucherId) {
       try { await markVoucherUsed.mutateAsync(selectedVoucher.userVoucherId); } catch {}
     }
 
-    // Create order
-    const deliveryLabel = deliveryChoice ? DELIVERY_FEES[deliveryChoice].label : "Self Pickup";
-    const sellerNames = [...new Set(selectedItems.map((i) => i.listing?.name || "Seller"))];
+    const deliveryLabel = chosenOption?.label || "Self Pickup";
+    const sellerNames = [...new Set(selectedItems.map((i) => (i.listing as any)?.seller_name || i.listing?.name || "Seller"))];
     addOrder({
       items: selectedItems.map((i) => ({
         name: i.listing?.name || "Item",
@@ -173,7 +236,6 @@ const CartPage = () => {
       sellerNames,
     });
 
-    // Record impact metrics
     const moneySaved = selectedItems.reduce((sum, i) => {
       const orig = i.listing?.original_price || 0;
       const disc = i.listing?.discount_price || 0;
@@ -189,13 +251,12 @@ const CartPage = () => {
     }, 0);
     try { await recordPurchase.mutateAsync({ moneySaved, foodSavedKg }); } catch {}
 
-    // Earn points: 1 point per RM1 spent (rounded)
     const pointsEarned = Math.max(1, Math.round(selectedTotal));
     try {
       await earnPoints.mutateAsync({ amount: pointsEarned, description: `Purchase of ${selectedCount} item${selectedCount > 1 ? "s" : ""}` });
       setShowPointsFloat(pointsEarned);
     } catch {}
-    // Remove only selected items from cart
+
     for (const item of selectedItems) {
       await removeFromCart(item.listing_id);
     }
@@ -206,9 +267,7 @@ const CartPage = () => {
     setTimeout(() => { setOrderComplete(false); setShowPointsFloat(null); navigate("/orders"); }, 2500);
   };
 
-  const handlePaymentError = (error: string) => {
-    toast.error(error);
-  };
+  const handlePaymentError = (error: string) => { toast.error(error); };
 
   const confirmRemoveItem = () => {
     if (confirmRemove) {
@@ -246,16 +305,11 @@ const CartPage = () => {
           </div>
         ) : (
           <div className="p-4 space-y-3">
-            {/* Select All */}
             <button
               onClick={toggleAll}
               className="flex items-center gap-2 px-1 py-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              {allSelected ? (
-                <CheckSquare size={18} className="text-primary" />
-              ) : (
-                <Square size={18} />
-              )}
+              {allSelected ? <CheckSquare size={18} className="text-primary" /> : <Square size={18} />}
               <span className="text-xs font-medium">Select All</span>
             </button>
 
@@ -269,26 +323,14 @@ const CartPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
                   className={`flex gap-3 rounded-xl p-3 border-2 transition-colors ${
-                    isSold
-                      ? "border-destructive/30 bg-muted/60 opacity-60"
-                      : isSelected
-                        ? "border-primary/40 bg-primary/5"
-                        : "border-border bg-card"
+                    isSold ? "border-destructive/30 bg-muted/60 opacity-60"
+                      : isSelected ? "border-primary/40 bg-primary/5" : "border-border bg-card"
                   }`}
                 >
-                  {/* Checkbox */}
-                  <button
-                    onClick={() => toggleSelect(item.listing_id)}
-                    className="self-center shrink-0"
-                    disabled={isSold}
-                  >
-                    {isSold ? (
-                      <Square size={20} className="text-muted-foreground/40" />
-                    ) : isSelected ? (
-                      <CheckSquare size={20} className="text-primary" />
-                    ) : (
-                      <Square size={20} className="text-muted-foreground" />
-                    )}
+                  <button onClick={() => toggleSelect(item.listing_id)} className="self-center shrink-0" disabled={isSold}>
+                    {isSold ? <Square size={20} className="text-muted-foreground/40" />
+                      : isSelected ? <CheckSquare size={20} className="text-primary" />
+                      : <Square size={20} className="text-muted-foreground" />}
                   </button>
 
                   {item.listing?.image_url ? (
@@ -302,16 +344,10 @@ const CartPage = () => {
                         {item.listing?.name || "Item"}
                       </p>
                       {isSold && (
-                        <span className="shrink-0 text-[10px] font-bold bg-destructive text-destructive-foreground px-1.5 py-0.5 rounded-full">
-                          SOLD
-                        </span>
+                        <span className="shrink-0 text-[10px] font-bold bg-destructive text-destructive-foreground px-1.5 py-0.5 rounded-full">SOLD</span>
                       )}
                     </div>
-                    {isSold && (
-                      <p className="text-[11px] text-destructive mt-0.5">
-                        This item has been purchased by another user
-                      </p>
-                    )}
+                    {isSold && <p className="text-[11px] text-destructive mt-0.5">This item has been purchased by another user</p>}
                     {item.listing?.weight && (
                       <p className={`text-xs ${isSold ? "text-muted-foreground/60" : "text-muted-foreground"}`}>{item.listing.weight}</p>
                     )}
@@ -338,103 +374,84 @@ const CartPage = () => {
           </div>
         )}
 
-          {/* Apply Voucher Button */}
-          {selectedCount > 0 && (
-            <div className="px-4 pb-3">
-              <button
-                onClick={() => setShowVouchers(true)}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-card border border-border hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Tag size={16} className="text-primary" />
-                  <span className="text-sm font-medium text-foreground">
-                    {selectedVoucher ? selectedVoucher.voucher.name : "Apply Voucher"}
-                  </span>
-                  {selectedVoucher && voucherDiscount > 0 && (
-                    <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                      -RM{voucherDiscount.toFixed(2)}
-                    </span>
-                  )}
-                </div>
-                <Tag size={14} className="text-muted-foreground" />
-              </button>
-            </div>
-          )}
-
-          {/* Voucher Selection Modal */}
-          <Dialog open={showVouchers} onOpenChange={setShowVouchers}>
-            <DialogContent className="max-w-md mx-auto max-h-[70vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Tag size={18} className="text-primary" />
-                  My Vouchers
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-2 mt-2">
-                {/* No voucher option */}
-                <button
-                  onClick={() => { setSelectedVoucherId(null); setShowVouchers(false); }}
-                  className={`w-full text-left p-3 rounded-lg border-2 transition-colors text-sm ${
-                    !selectedVoucherId ? "border-primary bg-primary/5" : "border-border bg-card"
-                  }`}
-                >
-                  <span className="font-medium text-foreground">No voucher</span>
-                </button>
-
-                {userVouchers?.map((uv) => {
-                  if (!uv.voucher) return null;
-                  const discount = calculateDiscount(uv.voucher, selectedTotal);
-                  const meetsMin = selectedTotal >= uv.voucher.min_spend;
-                  return (
-                    <button
-                      key={uv.id}
-                      onClick={() => {
-                        if (!meetsMin) { toast.error(`Min spend RM${uv.voucher!.min_spend.toFixed(2)} required`); return; }
-                        setSelectedVoucherId(uv.id);
-                        setShowVouchers(false);
-                        toast.success(`Voucher "${uv.voucher!.name}" applied!`);
-                      }}
-                      className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
-                        selectedVoucherId === uv.id ? "border-primary bg-primary/5" : "border-border bg-card"
-                      } ${!meetsMin ? "opacity-50" : ""}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-foreground">{uv.voucher.name}</span>
-                        {meetsMin && discount > 0 && (
-                          <span className="text-xs font-semibold text-primary">-RM{discount.toFixed(2)}</span>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between mt-1">
-                        <div>
-                          {uv.voucher.min_spend > 0 && (
-                            <p className="text-[11px] text-muted-foreground">
-                              Min spend RM{uv.voucher.min_spend.toFixed(2)}
-                              {!meetsMin && " (not met)"}
-                            </p>
-                          )}
-                          {uv.voucher.expires_at && (
-                            <p className="text-[11px] text-muted-foreground">
-                              Expires: {new Date(uv.voucher.expires_at).toLocaleDateString()}
-                            </p>
-                          )}
-                        </div>
-                        {meetsMin && (
-                          <span className="text-xs font-semibold text-primary-foreground bg-primary px-3 py-1 rounded-full">
-                            Apply
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-
-                {(!userVouchers?.length) && (
-                  <p className="text-xs text-muted-foreground text-center py-3">No vouchers available. Claim vouchers from the Points page!</p>
+        {/* Apply Voucher Button */}
+        {selectedCount > 0 && (
+          <div className="px-4 pb-3">
+            <button
+              onClick={() => setShowVouchers(true)}
+              className="w-full flex items-center justify-between p-3 rounded-xl bg-card border border-border hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Tag size={16} className="text-primary" />
+                <span className="text-sm font-medium text-foreground">
+                  {selectedVoucher ? selectedVoucher.voucher.name : "Apply Voucher"}
+                </span>
+                {selectedVoucher && voucherDiscount > 0 && (
+                  <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">-RM{voucherDiscount.toFixed(2)}</span>
                 )}
               </div>
-            </DialogContent>
-          </Dialog>
+              <Tag size={14} className="text-muted-foreground" />
+            </button>
+          </div>
+        )}
 
+        {/* Voucher Selection Modal */}
+        <Dialog open={showVouchers} onOpenChange={setShowVouchers}>
+          <DialogContent className="max-w-md mx-auto max-h-[70vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Tag size={18} className="text-primary" />
+                My Vouchers
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2 mt-2">
+              <button
+                onClick={() => { setSelectedVoucherId(null); setShowVouchers(false); }}
+                className={`w-full text-left p-3 rounded-lg border-2 transition-colors text-sm ${!selectedVoucherId ? "border-primary bg-primary/5" : "border-border bg-card"}`}
+              >
+                <span className="font-medium text-foreground">No voucher</span>
+              </button>
+              {userVouchers?.map((uv) => {
+                if (!uv.voucher) return null;
+                const discount = calculateDiscount(uv.voucher, selectedTotal);
+                const meetsMin = selectedTotal >= uv.voucher.min_spend;
+                return (
+                  <button
+                    key={uv.id}
+                    onClick={() => {
+                      if (!meetsMin) { toast.error(`Min spend RM${uv.voucher!.min_spend.toFixed(2)} required`); return; }
+                      setSelectedVoucherId(uv.id);
+                      setShowVouchers(false);
+                      toast.success(`Voucher "${uv.voucher!.name}" applied!`);
+                    }}
+                    className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${selectedVoucherId === uv.id ? "border-primary bg-primary/5" : "border-border bg-card"} ${!meetsMin ? "opacity-50" : ""}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-foreground">{uv.voucher.name}</span>
+                      {meetsMin && discount > 0 && <span className="text-xs font-semibold text-primary">-RM{discount.toFixed(2)}</span>}
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <div>
+                        {uv.voucher.min_spend > 0 && (
+                          <p className="text-[11px] text-muted-foreground">Min spend RM{uv.voucher.min_spend.toFixed(2)}{!meetsMin && " (not met)"}</p>
+                        )}
+                        {uv.voucher.expires_at && (
+                          <p className="text-[11px] text-muted-foreground">Expires: {new Date(uv.voucher.expires_at).toLocaleDateString()}</p>
+                        )}
+                      </div>
+                      {meetsMin && <span className="text-xs font-semibold text-primary-foreground bg-primary px-3 py-1 rounded-full">Apply</span>}
+                    </div>
+                  </button>
+                );
+              })}
+              {(!userVouchers?.length) && (
+                <p className="text-xs text-muted-foreground text-center py-3">No vouchers available. Claim vouchers from the Points page!</p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bottom bar */}
         {items.length > 0 && !showCheckout && (
           <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border p-4 z-30 px-[16px] py-[8px]">
             <div className="flex justify-between items-center mb-1">
@@ -456,9 +473,7 @@ const CartPage = () => {
               onClick={handleCheckout}
               disabled={selectedCount === 0}
               className={`w-full font-semibold py-4 rounded-2xl shadow-lg transition-colors ${
-                selectedCount > 0
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground cursor-not-allowed"
+                selectedCount > 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground cursor-not-allowed"
               }`}
             >
               {selectedCount > 0 ? `Checkout (${selectedCount})` : "Select items to checkout"}
@@ -482,46 +497,90 @@ const CartPage = () => {
                 exit={{ y: 100, opacity: 0 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-card rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-xl border border-border"
+                className="bg-card rounded-t-2xl sm:rounded-2xl p-6 w-full max-w-md shadow-xl border border-border max-h-[85vh] overflow-y-auto"
               >
                 <h3 className="text-base font-bold text-foreground text-center mb-1">How do you want to get your items?</h3>
-                <p className="text-xs text-muted-foreground text-center mb-5">Choose your preferred collection method</p>
+                <p className="text-xs text-muted-foreground text-center mb-5">Only showing delivery options available from the seller(s)</p>
 
                 <div className="space-y-3">
-                  {([
-                    { key: "pickup" as const, icon: MapPin, label: "Self Pickup", desc: "Collect from the seller's location", fee: 0 },
-                    { key: "grab" as const, icon: Truck, label: "GrabExpress", desc: "Delivered via Grab", fee: DELIVERY_FEES.grab.fee },
-                    { key: "lalamove" as const, icon: Truck, label: "Lalamove", desc: "Delivered via Lalamove", fee: DELIVERY_FEES.lalamove.fee },
-                  ]).map((opt) => (
-                    <button
-                      key={opt.key}
-                      onClick={() => setDeliveryChoice(opt.key)}
-                      className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${
-                        deliveryChoice === opt.key
-                          ? "border-primary bg-primary/5"
-                          : "border-border bg-card hover:border-muted-foreground/30"
-                      }`}
-                    >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                        deliveryChoice === opt.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                      }`}>
-                        <opt.icon size={18} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-foreground">{opt.label}</p>
-                        <p className="text-xs text-muted-foreground">{opt.desc}</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        {opt.fee > 0 ? (
-                          <span className="text-xs font-semibold text-primary">+RM{opt.fee.toFixed(2)}</span>
-                        ) : (
-                          <span className="text-xs font-medium text-muted-foreground">Free</span>
-                        )}
-                      </div>
-                      {deliveryChoice === opt.key && <Check size={18} className="text-primary shrink-0" />}
-                    </button>
-                  ))}
+                  {availableDeliveryOptions.map((opt) => {
+                    const Icon = opt.key === "pickup" ? MapPin : Truck;
+                    return (
+                      <button
+                        key={opt.key}
+                        onClick={() => setDeliveryChoice(opt.key)}
+                        className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${
+                          deliveryChoice === opt.key
+                            ? "border-primary bg-primary/5"
+                            : "border-border bg-card hover:border-muted-foreground/30"
+                        }`}
+                      >
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                          deliveryChoice === opt.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                        }`}>
+                          <Icon size={18} />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-foreground">{opt.label}</p>
+                          <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                            <Clock size={10} /> {opt.estimatedTime}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          {opt.fee > 0 ? (
+                            <span className="text-xs font-semibold text-primary">+RM{opt.fee.toFixed(2)}</span>
+                          ) : (
+                            <span className="text-xs font-medium text-muted-foreground">Free</span>
+                          )}
+                        </div>
+                        {deliveryChoice === opt.key && <Check size={18} className="text-primary shrink-0" />}
+                      </button>
+                    );
+                  })}
                 </div>
+
+                {/* Distance alert for pickup */}
+                {deliveryChoice === "pickup" && distanceInfo && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="mt-3"
+                  >
+                    {distanceInfo.distance > 5 ? (
+                      <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs">
+                        <AlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-600" />
+                        <div>
+                          <p className="font-semibold text-amber-800">
+                            ⚠️ This seller is {distanceInfo.distance.toFixed(1)}km away from you
+                          </p>
+                          <p className="text-amber-700 mt-0.5">
+                            Pickup may take ~{Math.ceil(distanceInfo.distance * 3)} minutes by car. Consider using delivery instead if available.
+                          </p>
+                          {availableDeliveryOptions.some((o) => o.key !== "pickup") && (
+                            <button
+                              onClick={() => setDeliveryChoice(null)}
+                              className="mt-1.5 text-amber-800 font-semibold underline"
+                            >
+                              View delivery options →
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ) : distanceInfo.distance <= 3 ? (
+                      <div className="flex items-start gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs">
+                        <Check size={16} className="shrink-0 mt-0.5 text-emerald-600" />
+                        <p className="text-emerald-700">
+                          ✅ Great news! This seller is only {distanceInfo.distance.toFixed(1)}km away — just around the corner! Pickup will be quick and easy. 😊
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-2 p-3 rounded-xl bg-muted/50 text-xs text-muted-foreground">
+                        <MapPin size={14} className="shrink-0 mt-0.5 text-primary" />
+                        <span>📍 Seller is {distanceInfo.distance.toFixed(1)}km away. Pickup is available.</span>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
 
                 {deliveryChoice && deliveryChoice !== "pickup" && (
                   <motion.div
@@ -530,7 +589,7 @@ const CartPage = () => {
                     className="mt-3 flex items-start gap-2 p-3 rounded-xl bg-muted/50 text-xs text-muted-foreground"
                   >
                     <Info size={14} className="shrink-0 mt-0.5 text-primary" />
-                    <span>This delivery fee goes to {DELIVERY_FEES[deliveryChoice].label}, not the seller.</span>
+                    <span>This delivery fee goes to {chosenOption?.label || "the delivery service"}, not the seller.</span>
                   </motion.div>
                 )}
 
@@ -539,9 +598,15 @@ const CartPage = () => {
                     <span className="text-xs text-muted-foreground">Subtotal ({selectedCount} items)</span>
                     <span className="text-sm font-medium text-foreground">RM{selectedTotal.toFixed(2)}</span>
                   </div>
+                  {voucherDiscount > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-primary">Voucher</span>
+                      <span className="text-sm font-semibold text-primary">-RM{voucherDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
                   {deliveryFee > 0 && (
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-muted-foreground">Delivery fee ({DELIVERY_FEES[deliveryChoice!].label})</span>
+                      <span className="text-xs text-muted-foreground">Delivery ({chosenOption?.label})</span>
                       <span className="text-sm font-medium text-foreground">RM{deliveryFee.toFixed(2)}</span>
                     </div>
                   )}
@@ -562,9 +627,7 @@ const CartPage = () => {
                     whileTap={{ scale: 0.95 }}
                     onClick={handleConfirmOrder}
                     className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${
-                      deliveryChoice
-                        ? "bg-primary text-primary-foreground shadow-lg"
-                        : "bg-muted text-muted-foreground"
+                      deliveryChoice ? "bg-primary text-primary-foreground shadow-lg" : "bg-muted text-muted-foreground"
                     }`}
                   >
                     Confirm Order
@@ -594,12 +657,7 @@ const CartPage = () => {
               </motion.div>
               <p className="text-lg font-bold text-foreground">Order Placed! 🌿</p>
               {showPointsFloat && (
-                <motion.p
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-sm font-bold text-primary"
-                >
+                <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-sm font-bold text-primary">
                   +{showPointsFloat} points earned! 🎉
                 </motion.p>
               )}
@@ -626,22 +684,10 @@ const CartPage = () => {
                 className="bg-card rounded-2xl p-6 max-w-xs w-full shadow-xl border border-border"
               >
                 <p className="text-sm font-semibold text-foreground text-center">Remove this item?</p>
-                <p className="text-xs text-muted-foreground text-center mt-2">
-                  Are you sure you want to remove this from your cart?
-                </p>
+                <p className="text-xs text-muted-foreground text-center mt-2">Are you sure you want to remove this from your cart?</p>
                 <div className="flex gap-3 mt-5">
-                  <button
-                    onClick={() => setConfirmRemove(null)}
-                    className="flex-1 py-2.5 rounded-xl bg-muted text-sm font-medium text-foreground active:scale-95 transition-transform"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={confirmRemoveItem}
-                    className="flex-1 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-medium active:scale-95 transition-transform"
-                  >
-                    Remove
-                  </button>
+                  <button onClick={() => setConfirmRemove(null)} className="flex-1 py-2.5 rounded-xl bg-muted text-sm font-medium text-foreground active:scale-95 transition-transform">Cancel</button>
+                  <button onClick={confirmRemoveItem} className="flex-1 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-medium active:scale-95 transition-transform">Remove</button>
                 </div>
               </motion.div>
             </motion.div>
@@ -653,9 +699,7 @@ const CartPage = () => {
           open={showFPX}
           amount={grandTotal}
           orderId={`PS-${Date.now().toString(36).toUpperCase()}`}
-          onClose={() => {
-            setShowFPX(false);
-          }}
+          onClose={() => setShowFPX(false)}
           onSuccess={handlePaymentSuccess}
           onError={handlePaymentError}
         />
