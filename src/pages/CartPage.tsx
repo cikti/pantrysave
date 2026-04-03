@@ -65,8 +65,25 @@ const CartPage = () => {
   );
   const selectedCount = selectedItems.length;
 
+  // Voucher discount
+  const selectedVoucher = useMemo(() => {
+    if (!selectedVoucherId) return null;
+    // Check user vouchers first
+    const uv = userVouchers?.find((v) => v.id === selectedVoucherId);
+    if (uv?.voucher) return { userVoucherId: uv.id, voucher: uv.voucher };
+    // Check all vouchers (unclaimed)
+    const av = allVouchers?.find((v) => v.id === selectedVoucherId);
+    if (av) return { userVoucherId: null, voucher: av };
+    return null;
+  }, [selectedVoucherId, userVouchers, allVouchers]);
+
+  const voucherDiscount = useMemo(() => {
+    if (!selectedVoucher) return 0;
+    return calculateDiscount(selectedVoucher.voucher, selectedTotal);
+  }, [selectedVoucher, selectedTotal]);
+
   const deliveryFee = deliveryChoice ? DELIVERY_FEES[deliveryChoice].fee : 0;
-  const grandTotal = selectedTotal + deliveryFee;
+  const grandTotal = Math.max(0, selectedTotal - voucherDiscount + deliveryFee);
 
   if (!user) {
     return (
