@@ -45,23 +45,7 @@ const CartPage = () => {
   const [showFPX, setShowFPX] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showPointsFloat, setShowPointsFloat] = useState<number | null>(null);
-  const [buyerPos, setBuyerPos] = useState<[number, number] | null>(null);
-
-  // Voucher state
-  const { data: userVouchers } = useUserVouchers();
-  const markVoucherUsed = useMarkVoucherUsed();
-  const [selectedVoucherId, setSelectedVoucherId] = useState<string | null>(null);
-  const [showVouchers, setShowVouchers] = useState(false);
-
-  // Get buyer location for distance alerts
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setBuyerPos([pos.coords.latitude, pos.coords.longitude]),
-        () => {}
-      );
-    }
-  }, []);
+  const { position: buyerPos } = useGeolocation();
 
   const toggleSelect = (id: string) => {
     const item = items.find((i) => i.listing_id === id);
