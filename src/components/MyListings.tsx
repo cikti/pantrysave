@@ -2,6 +2,7 @@ import { useMyListings, useUpdateListingStatus, useDeleteListing, type Listing }
 import { Trash2, CheckCircle, Package, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { useImpact } from "@/hooks/useImpact";
 
 const statusColors: Record<string, string> = {
   available: "bg-primary/10 text-primary",
@@ -19,6 +20,7 @@ const MyListings = () => {
   const { data: listings, isLoading } = useMyListings();
   const updateStatus = useUpdateListingStatus();
   const deleteListing = useDeleteListing();
+  const { incrementItemsListed } = useImpact();
 
   const handleMarkSold = (id: string) => {
     updateStatus.mutate(
@@ -29,7 +31,10 @@ const MyListings = () => {
 
   const handleDelete = (id: string) => {
     deleteListing.mutate(id, {
-      onSuccess: () => toast.success("Listing removed"),
+      onSuccess: () => {
+        toast.success("Listing removed");
+        try { incrementItemsListed.mutate(-1); } catch {}
+      },
     });
   };
 

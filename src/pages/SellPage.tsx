@@ -12,6 +12,7 @@ import DeliveryInput, { type DeliveryOption } from "@/components/sell/DeliveryIn
 import { useCreateListing } from "@/hooks/useListings";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useImpact } from "@/hooks/useImpact";
 
 const steps = ["Photo", "Details", "Location", "Pricing"];
 
@@ -19,6 +20,7 @@ const SellPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const createListing = useCreateListing();
+  const { incrementItemsListed } = useImpact();
   const [currentStep, setCurrentStep] = useState(0);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -135,6 +137,7 @@ const SellPage = () => {
         stock_quantity: maxQty ? Math.floor(maxQty) : 1,
       });
 
+      try { await incrementItemsListed.mutateAsync(1); } catch {}
       toast.success("You rescued this item! 🌿", {
         description: "Your listing is now live",
       });

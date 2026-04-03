@@ -1,34 +1,24 @@
 import { useState, useRef } from "react";
-import { Leaf, Wallet, ShoppingBag, TrendingUp, LogOut, Award, Camera, User, Package, Coins } from "lucide-react";
+import { Leaf, Wallet, ShoppingBag, TrendingUp, LogOut, Camera, User, Coins } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { useCountUp } from "@/hooks/useCountUp";
 import { useAvatar } from "@/hooks/useAvatar";
 import { usePoints } from "@/hooks/usePoints";
+import { useImpact } from "@/hooks/useImpact";
 import PageTransition from "@/components/PageTransition";
 import MyListings from "@/components/MyListings";
-
-const badges = [
-  { label: "Food Saver", emoji: "🌿", unlocked: true },
-  { label: "Eco Hero", emoji: "🌍", unlocked: true },
-  { label: "Pantry Pro", emoji: "⭐", unlocked: false },
-];
 
 const ProfilePage = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { avatarUrl, uploadAvatar } = useAvatar();
   const { balance: pointsBalance } = usePoints();
+  const { impact } = useImpact();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<"impact" | "listings">("impact");
-
-  const moneySaved = useCountUp(124.5, 1200, 2);
-  const foodSaved = useCountUp(18.2, 1000, 1);
-  const orders = useCountUp(12, 800, 0);
-  const items = useCountUp(5, 600, 0);
 
   const handleLogout = async () => {
     await signOut();
@@ -49,12 +39,22 @@ const ProfilePage = () => {
     finally { setUploading(false); }
   };
 
-  const stats = [
-    { icon: Wallet, label: "Money Saved", value: `RM ${moneySaved.toFixed(2)}`, color: "bg-accent text-accent-foreground" },
-    { icon: Leaf, label: "Food Saved", value: `${foodSaved.toFixed(1)} kg`, color: "bg-primary/10 text-primary" },
-    { icon: ShoppingBag, label: "Orders Made", value: `${orders}`, color: "bg-secondary text-secondary-foreground" },
-    { icon: TrendingUp, label: "Items Listed", value: `${items}`, color: "bg-accent text-accent-foreground" },
+  // Dynamic badges based on real impact
+  const badges = [
+    { label: "Food Saver", emoji: "🌿", unlocked: impact.food_saved >= 5 },
+    { label: "Eco Hero", emoji: "🌍", unlocked: impact.food_saved >= 10 || impact.money_saved >= 50 },
+    { label: "Pantry Pro", emoji: "⭐", unlocked: impact.orders_made >= 5 },
   ];
+
+  const stats = [
+    { icon: Wallet, label: "Money Saved", value: `RM ${impact.money_saved.toFixed(2)}`, color: "bg-accent text-accent-foreground" },
+    { icon: Leaf, label: "Food Saved", value: `${impact.food_saved.toFixed(1)} kg`, color: "bg-primary/10 text-primary" },
+    { icon: ShoppingBag, label: "Orders Made", value: `${impact.orders_made}`, color: "bg-secondary text-secondary-foreground" },
+    { icon: TrendingUp, label: "Items Listed", value: `${impact.items_listed}`, color: "bg-accent text-accent-foreground" },
+  ];
+
+  const goalKg = 25;
+  const progressPct = Math.min(100, (impact.food_saved / goalKg) * 100);
 
   return (
     <PageTransition>
@@ -122,11 +122,11 @@ const ProfilePage = () => {
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="px-5 mt-5">
               <div className="bg-card rounded-2xl p-4 shadow-sm">
                 <p className="text-xs font-semibold text-foreground mb-2">Impact Goal</p>
-                <p className="text-xs text-muted-foreground mb-3">Save 25kg of food from landfill</p>
+                <p className="text-xs text-muted-foreground mb-3">Save {goalKg}kg of food from landfill</p>
                 <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: "73%" }} transition={{ delay: 0.7, duration: 0.8, ease: "easeOut" }} className="h-full bg-primary rounded-full" />
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${progressPct}%` }} transition={{ delay: 0.7, duration: 0.8, ease: "easeOut" }} className="h-full bg-primary rounded-full" />
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-1.5">18.2 / 25 kg</p>
+                <p className="text-[10px] text-muted-foreground mt-1.5">{impact.food_saved.toFixed(1)} / {goalKg} kg</p>
               </div>
             </motion.div>
 
