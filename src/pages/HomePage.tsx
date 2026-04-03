@@ -11,6 +11,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useChat } from "@/contexts/ChatContext";
 import { useTotalUnread } from "@/hooks/useChat";
 import type { GroceryItem } from "@/data/mockData";
+import MyOrders from "@/components/MyOrders";
 
 const STORAGE_KEY = "pantrysave_recent_searches";
 const MAX_RECENT = 6;
