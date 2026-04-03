@@ -115,16 +115,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const items = [...dbItems, ...mockItems];
 
   const addToCart = async (listingId: string, quantity = 1, mockData?: CartItem["listing"], maxQuantity?: number) => {
+    // Prevent duplicate items
+    const alreadyInCart = items.find((i) => i.listing_id === listingId);
+    if (alreadyInCart) {
+      toast.error("This item is already in your cart");
+      return;
+    }
+
     // Mock item (not in DB)
     if (mockData) {
       setMockItems((prev) => {
-        const existing = prev.find((i) => i.listing_id === listingId);
-        let updated: CartItem[];
-        if (existing) {
-          updated = prev.map((i) => i.listing_id === listingId ? { ...i, quantity: i.quantity + quantity } : i);
-        } else {
-          updated = [...prev, { id: `mock-${listingId}`, listing_id: listingId, quantity, isMock: true, listing: mockData, maxQuantity }];
-        }
+        const updated = [...prev, { id: `mock-${listingId}`, listing_id: listingId, quantity, isMock: true, listing: mockData, maxQuantity }];
         saveMockCart(updated);
         return updated;
       });
