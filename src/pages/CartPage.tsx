@@ -220,7 +220,7 @@ const CartPage = () => {
     }
 
     const deliveryLabel = chosenOption?.label || "Self Pickup";
-    const sellerNames = [...new Set(selectedItems.map((i) => i.listing?.seller_name || i.listing?.name || "Seller"))];
+    const sellerNames = [...new Set(selectedItems.map((i) => (i.listing as any)?.seller_name || i.listing?.name || "Seller"))];
     addOrder({
       items: selectedItems.map((i) => ({
         name: i.listing?.name || "Item",
