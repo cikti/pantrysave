@@ -125,11 +125,7 @@ const MapPage = () => {
 
   const handlePreviewClick = () => {
     if (!selectedItem) return;
-    if (selectedItem.isDbListing) {
-      navigate(`/item/db-${selectedItem.id}`);
-    } else {
-      navigate(`/item/${selectedItem.id}`);
-    }
+    navigate(`/item/db-${selectedItem.id}`);
   };
 
   const distanceText =
