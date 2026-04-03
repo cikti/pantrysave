@@ -56,6 +56,24 @@ export type CreateListingInput = {
 };
 
 export function useListings() {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("listings-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "listings" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["listings"] });
+          queryClient.invalidateQueries({ queryKey: ["listing"] });
+          queryClient.invalidateQueries({ queryKey: ["my-listings"] });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ["listings"],
     queryFn: async () => {
