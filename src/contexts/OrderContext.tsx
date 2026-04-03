@@ -108,7 +108,7 @@ const DEMO_ORDERS: Order[] = [
 export function OrderProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>(() => {
     const saved = loadOrders();
-    if (saved.length === 0) return [DEMO_ORDER];
+    if (saved.length === 0) return DEMO_ORDERS;
     return saved;
   });
 
