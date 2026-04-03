@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, ShoppingCart, Info, Check, MapPin, Truck, MessageCircle } from "lucide-react";
-import { groceryItems } from "@/data/mockData";
 import { toast } from "sonner";
 import { motion, useScroll, useTransform } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
@@ -31,37 +30,15 @@ const ItemDetail = () => {
   const imageOpacity = useTransform(scrollY, [0, 300], [1, 0.7]);
   const { data: dbListings } = useListings();
 
-  const isDbListing = id?.startsWith("db-");
-  const dbId = isDbListing ? id.replace("db-", "") : null;
+  const isDbListing = true; // All items are now DB listings
+  const dbId = id?.startsWith("db-") ? id.replace("db-", "") : id;
   const { data: directDbItem } = useListingById(dbId ?? undefined);
   const dbItem = directDbItem || dbListings?.find((l) => l.id === dbId);
-  const mockItem = !isDbListing ? groceryItems.find((i) => i.id === id) : null;
 
   const isSold = dbItem?.status === "sold";
 
   // Normalize item data
-  const item = mockItem
-    ? {
-        name: mockItem.name,
-        seller: mockItem.seller,
-        image: mockItem.image,
-        weight: mockItem.weight,
-        originalPrice: mockItem.originalPrice,
-        discountPrice: mockItem.clearancePrice,
-        badge: mockItem.badge,
-        badgeType: mockItem.badgeType,
-        reason: mockItem.reason,
-        deliveryType: null as string | null,
-        deliveryService: null as string | null,
-        address: null as string | null,
-        expiryDays: null as number | null,
-        pricingType: "fixed" as string,
-        pricePerUnit: null as number | null,
-        unitType: "quantity" as string,
-        maxQuantity: null as number | null,
-        stockQuantity: null as number | null,
-      }
-    : dbItem
+  const item = dbItem
     ? {
         name: dbItem.name,
         seller: dbItem.seller_name || dbItem.address || "Local seller",
@@ -70,7 +47,7 @@ const ItemDetail = () => {
         originalPrice: Number(dbItem.original_price),
         discountPrice: Number(dbItem.discount_price),
         badge: isSold ? "SOLD" : (dbItem.condition || "Discounted"),
-        badgeType: isSold ? "sold" as const : "overstock" as const,
+        badgeType: isSold ? "sold" as const : (dbItem.condition === "Near Expiry" ? "expiry" as const : dbItem.condition === "Slightly Imperfect" ? "imperfect" as const : "overstock" as const),
         reason: dbItem.reason || "Discounted item",
         deliveryType: dbItem.delivery_type,
         deliveryService: dbItem.delivery_service || null,
@@ -112,16 +89,8 @@ const ItemDetail = () => {
       return;
     }
 
-    if (isDbListing && dbId) {
+    if (dbId) {
       await addToCart(dbId, 1, undefined, 1);
-    } else if (mockItem && id) {
-      await addToCart(id, 1, {
-        name: item.name,
-        image_url: item.image,
-        discount_price: item.discountPrice,
-        original_price: item.originalPrice,
-        weight: item.weight,
-      }, 1);
     }
 
     setReserved(true);

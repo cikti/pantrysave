@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { MapPin, Search, X, Clock, Trash2, ShoppingCart, MessageCircle } from "lucide-react";
-import { categories, groceryItems } from "@/data/mockData";
+import { categories } from "@/data/mockData";
 import GroceryCard from "@/components/GroceryCard";
 import PageTransition from "@/components/PageTransition";
 import UserAvatar from "@/components/UserAvatar";
@@ -63,7 +63,7 @@ const HomePage = () => {
   const handleClearHistory = () => { clearRecentSearches(); setRecentSearches([]); };
 
   // Convert DB listings to GroceryItem-like shape for display
-  const dbItems: GroceryItem[] = useMemo(() => {
+  const allItems: GroceryItem[] = useMemo(() => {
     return (dbListings || []).map((l) => ({
       id: `db-${l.id}`,
       name: l.name,
@@ -74,12 +74,10 @@ const HomePage = () => {
       originalPrice: Number(l.original_price),
       clearancePrice: Number(l.discount_price),
       badge: l.condition || "Discounted",
-      badgeType: (l.condition === "Near Expiry" ? "expiry" : l.condition === "Imperfect Look" ? "imperfect" : "overstock") as GroceryItem["badgeType"],
+      badgeType: (l.condition === "Near Expiry" ? "expiry" : l.condition === "Slightly Imperfect" ? "imperfect" : "overstock") as GroceryItem["badgeType"],
       reason: l.reason || "Discounted item",
     }));
   }, [dbListings]);
-
-  const allItems = useMemo(() => [...groceryItems, ...dbItems], [dbItems]);
 
   const filtered = useMemo(() => {
     let items = activeCategory === "All" ? allItems : allItems.filter((i) => i.category === activeCategory);

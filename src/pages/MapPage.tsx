@@ -1,21 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { groceryItems } from "@/data/mockData";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import { useListings, type Listing } from "@/hooks/useListings";
 import { MapPin } from "lucide-react";
 
-const storeLocations: Record<string, [number, number]> = {
-  "1": [3.157, 101.712],
-  "2": [3.139, 101.6869],
-  "3": [3.171, 101.705],
-  "4": [3.148, 101.723],
-  "5": [3.162, 101.695],
-  "6": [3.135, 101.71],
-};
 
 type PreviewItem = {
   id: string;
@@ -102,26 +93,6 @@ const MapPage = () => {
 
     let markerIndex = 0;
 
-    groceryItems.forEach((item) => {
-      const pos = storeLocations[item.id];
-      if (!pos) return;
-      const idx = markerIndex++;
-      const marker = L.marker(pos, { icon: defaultIcon }).addTo(map);
-      animateMarker(marker, idx);
-      marker.on("click", () => {
-        setSelectedItem({
-          id: item.id,
-          name: item.name,
-          seller: item.seller,
-          image: item.image,
-          originalPrice: item.originalPrice,
-          discountPrice: item.clearancePrice,
-          lat: pos[0],
-          lng: pos[1],
-        });
-      });
-    });
-
     (dbListings || []).forEach((listing) => {
       if (!listing.latitude || !listing.longitude) return;
       const idx = markerIndex++;
@@ -153,11 +124,7 @@ const MapPage = () => {
 
   const handlePreviewClick = () => {
     if (!selectedItem) return;
-    if (selectedItem.isDbListing) {
-      navigate(`/item/db-${selectedItem.id}`);
-    } else {
-      navigate(`/item/${selectedItem.id}`);
-    }
+    navigate(`/item/db-${selectedItem.id}`);
   };
 
   const distanceText =
