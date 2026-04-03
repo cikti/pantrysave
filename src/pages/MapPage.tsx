@@ -123,19 +123,30 @@ const MapPage = () => {
   return (
     <PageTransition>
       <div className="min-h-screen pb-24 flex flex-col">
-        <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md px-4 pt-4 pb-3">
-          <h1 className="text-lg font-bold text-foreground tracking-tight">Nearby Listings</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {locError && !userPos ? (
-              <span className="flex items-center gap-1 text-destructive">
-                <MapPin size={12} /> Enable location to see nearby products
-              </span>
-            ) : userPos ? (
-              "Tap a marker to see item details"
-            ) : (
-              "Getting your location…"
-            )}
-          </p>
+        <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md px-4 pt-4 pb-3 flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold text-foreground tracking-tight">Nearby Listings</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {locError && !userPos ? (
+                <span className="flex items-center gap-1 text-destructive">
+                  <MapPin size={12} /> Enable location to see nearby products
+                </span>
+              ) : userPos ? (
+                "Tap a marker to see item details"
+              ) : (
+                "Getting your location…"
+              )}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            className="shrink-0 h-9 w-9 rounded-full"
+            onClick={refreshLocation}
+            disabled={locLoading}
+          >
+            <LocateFixed size={18} className={locLoading ? "animate-spin" : ""} />
+          </Button>
         </header>
 
         <div className="flex-1 px-4 pb-4 relative">
