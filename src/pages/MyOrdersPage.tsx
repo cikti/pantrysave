@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Package, Truck, CheckCircle2, XCircle, Clock, ChevronRight, RotateCcw, Box } from "lucide-react";
+import { ArrowLeft, Package, Truck, CheckCircle2, XCircle, Clock, ChevronRight, Box } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useOrders, Order, OrderStatus } from "@/contexts/OrderContext";
 import { Badge } from "@/components/ui/badge";
