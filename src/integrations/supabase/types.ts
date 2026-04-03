@@ -338,6 +338,83 @@ export type Database = {
         }
         Relationships: []
       }
+      user_vouchers: {
+        Row: {
+          created_at: string
+          id: string
+          is_used: boolean
+          used_at: string | null
+          user_id: string
+          voucher_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_used?: boolean
+          used_at?: string | null
+          user_id: string
+          voucher_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_used?: boolean
+          used_at?: string | null
+          user_id?: string
+          voucher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_vouchers_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vouchers: {
+        Row: {
+          code: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          min_spend: number
+          name: string
+          times_used: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          min_spend?: number
+          name: string
+          times_used?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          min_spend?: number
+          name?: string
+          times_used?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
