@@ -322,8 +322,8 @@ const ItemDetail = () => {
         )}
 
         <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border z-30 p-4">
-          {/* Quantity / Weight selector — only for flexible */}
-          {!reserved && isFlexible && (
+          {/* Quantity / Weight selector — for all items */}
+          {!reserved && !isSold && (isFlexible || isFixed) && (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-3">
               {isWeightUnit ? (
                 <div className="flex items-center gap-3">
