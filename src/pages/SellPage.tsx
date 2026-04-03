@@ -288,8 +288,10 @@ const SellPage = () => {
 
           {/* Delivery type */}
           <DeliveryInput
-            value={form.deliveryType}
-            onChange={(v) => update("deliveryType", v)}
+            selected={form.deliveryOptions}
+            onChange={(v) => update("deliveryOptions", v)}
+            fees={form.deliveryFees}
+            onFeeChange={(key, fee) => update("deliveryFees", { ...form.deliveryFees, [key]: fee })}
           />
 
           {form.pricingType === "fixed" ? (
