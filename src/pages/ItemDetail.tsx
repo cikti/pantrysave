@@ -20,7 +20,7 @@ const badgeColors: Record<string, string> = {
 const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart, items: cartItems } = useCart();
+  const { addToCart } = useCart();
   const { openChat } = useChat();
   const { user } = useAuth();
   const [reserved, setReserved] = useState(false);
@@ -38,8 +38,6 @@ const ItemDetail = () => {
   const mockItem = !isDbListing ? groceryItems.find((i) => i.id === id) : null;
 
   const isSold = dbItem?.status === "sold";
-  const itemListingId = isDbListing ? dbId! : id!;
-  const isInCart = cartItems.some((ci) => ci.listing_id === itemListingId);
 
   // Normalize item data
   const item = mockItem
@@ -103,7 +101,7 @@ const ItemDetail = () => {
     : null;
 
   const handleReserve = async () => {
-    if (reserved || isInCart) return;
+    if (reserved) return;
 
     if (isDbListing && dbId) {
       await addToCart(dbId, 1, undefined, 1);
@@ -262,24 +260,17 @@ const ItemDetail = () => {
 
         <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border z-30 p-4">
           <motion.button
-            onClick={isInCart ? () => navigate("/cart") : handleReserve}
+            onClick={handleReserve}
             disabled={isSold}
-            whileTap={!reserved && !isSold && !isInCart ? { scale: 0.96 } : {}}
+            whileTap={!reserved && !isSold ? { scale: 0.96 } : {}}
             className={`w-full font-semibold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-colors duration-300 ${
               isSold
                 ? "bg-muted text-muted-foreground cursor-not-allowed"
-                : isInCart
-                ? "bg-[hsl(35,90%,55%)] text-white"
                 : reserved ? "bg-accent text-primary" : "bg-primary text-primary-foreground"
             }`}
           >
             {isSold ? (
               "Sold Out"
-            ) : isInCart ? (
-              <>
-                <ShoppingCart size={18} />
-                Already in Cart — View Cart
-              </>
             ) : reserved ? (
               <>
                 <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
