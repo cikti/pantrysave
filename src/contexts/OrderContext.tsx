@@ -28,9 +28,12 @@ interface OrderContextType {
   addOrder: (order: Omit<Order, "id" | "createdAt" | "status" | "timeline">) => Order;
   cancelOrder: (id: string) => void;
   orderCount: number;
+  purchasedIds: Set<string>;
+  markPurchased: (ids: string[]) => void;
 }
 
 const STORAGE_KEY = "pantrysave_orders";
+const PURCHASED_KEY = "pantrysave_purchased_items";
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
 function generateOrderId(): string {
