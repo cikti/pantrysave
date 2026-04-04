@@ -104,7 +104,7 @@ const ItemDetail = () => {
   return (
     <PageTransition>
       <div className="min-h-screen pb-28" ref={scrollRef}>
-        <div className="relative overflow-hidden max-h-[280px] sm:max-h-[340px]">
+        <div className="relative overflow-hidden aspect-square max-h-[400px] sm:max-h-[480px]">
           {item.image ? (
             <motion.img
               src={item.image}
@@ -115,7 +115,7 @@ const ItemDetail = () => {
               style={{ scale: imageScale, opacity: imageOpacity }}
             />
           ) : (
-            <div className="w-full h-[280px] bg-muted" />
+            <div className="w-full aspect-square bg-muted" />
           )}
           <button
             onClick={() => navigate(-1)}
