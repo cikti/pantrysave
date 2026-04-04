@@ -29,14 +29,14 @@ const GroceryCard = ({ item, index = 0 }: { item: GroceryItem; index?: number })
       whileHover={{ y: -4, boxShadow: "0 8px 24px -8px hsl(var(--primary) / 0.15)" }}
       className="flex flex-col bg-card rounded-2xl overflow-hidden shadow-sm text-left tap-highlight"
     >
-      <div className="relative aspect-square overflow-hidden">
+      <div className="relative aspect-square overflow-hidden bg-muted/30">
         <img
           src={item.image}
           alt={item.name}
           loading="lazy"
           width={320}
           height={320}
-          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+          className="w-full h-full object-contain transition-transform duration-300 hover:scale-105 p-1"
         />
         <span
           className={`absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full ${badgeColors[item.badgeType]} ${
