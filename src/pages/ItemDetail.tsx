@@ -216,7 +216,7 @@ const ItemDetail = () => {
               }
               const sellerId = dbItem?.user_id || "mock-seller";
               openChat(undefined, {
-                productId: id || "",
+                productId: dbId || id || "",
                 productName: item.name,
                 productImage: item.image,
                 sellerId,
