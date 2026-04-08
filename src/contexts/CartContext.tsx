@@ -16,6 +16,13 @@ export interface CartItem {
     discount_price: number;
     original_price: number;
     weight: string | null;
+    delivery_options: any;
+    delivery_type: string | null;
+    delivery_service: string | null;
+    delivery_fee: number | null;
+    latitude: number | null;
+    longitude: number | null;
+    seller_name: string | null;
   };
 }
 
