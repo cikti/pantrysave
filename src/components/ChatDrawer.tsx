@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { X, Send, Check, CheckCheck, Paperclip, Smile, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChat, type ProductContext } from "@/contexts/ChatContext";
@@ -329,34 +329,39 @@ function ChatHeader({ convo, productContext, isMobile, onBack, onClose }: {
   );
 }
 
-function MessageBubble({ msg, isOwn }: { msg: import("@/hooks/useChat").Message; isOwn: boolean }) {
-  const time = format(new Date(msg.created_at), "HH:mm");
 
-  return (
-    <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
-      <motion.div
-        initial={{ opacity: 0, y: 6, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        className={`max-w-[75%] px-3 py-2 rounded-2xl ${
-          isOwn
-            ? "bg-[#DCF8C6] text-foreground rounded-br-md"
-            : "bg-card text-foreground rounded-bl-md shadow-sm"
-        }`}
-      >
-        <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
-        <div className={`flex items-center gap-1 mt-0.5 ${isOwn ? "justify-end" : ""}`}>
-          <span className="text-[10px] text-muted-foreground">{time}</span>
-          {isOwn && (
-            msg.is_read ? (
-              <CheckCheck size={12} className="text-blue-500" />
-            ) : (
-              <Check size={12} className="text-muted-foreground" />
-            )
-          )}
-        </div>
-      </motion.div>
-    </div>
-  );
-}
+
+const MessageBubble = React.forwardRef<HTMLDivElement, { msg: import("@/hooks/useChat").Message; isOwn: boolean }>(
+  ({ msg, isOwn }, ref) => {
+    const time = format(new Date(msg.created_at), "HH:mm");
+
+    return (
+      <div ref={ref} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+        <motion.div
+          initial={{ opacity: 0, y: 6, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          className={`max-w-[75%] px-3 py-2 rounded-2xl ${
+            isOwn
+              ? "bg-[#DCF8C6] text-foreground rounded-br-md"
+              : "bg-card text-foreground rounded-bl-md shadow-sm"
+          }`}
+        >
+          <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
+          <div className={`flex items-center gap-1 mt-0.5 ${isOwn ? "justify-end" : ""}`}>
+            <span className="text-[10px] text-muted-foreground">{time}</span>
+            {isOwn && (
+              msg.is_read ? (
+                <CheckCheck size={12} className="text-blue-500" />
+              ) : (
+                <Check size={12} className="text-muted-foreground" />
+              )
+            )}
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+);
+MessageBubble.displayName = "MessageBubble";
 
 export default ChatDrawer;
