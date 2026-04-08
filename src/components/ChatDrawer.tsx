@@ -329,7 +329,7 @@ function ChatHeader({ convo, productContext, isMobile, onBack, onClose }: {
   );
 }
 
-import React from "react";
+
 
 const MessageBubble = React.forwardRef<HTMLDivElement, { msg: import("@/hooks/useChat").Message; isOwn: boolean }>(
   ({ msg, isOwn }, ref) => {
