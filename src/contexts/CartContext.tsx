@@ -70,7 +70,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     const { data } = await supabase
       .from("cart_items")
-      .select("id, listing_id, quantity, listings(name, image_url, discount_price, original_price, weight)")
+      .select("id, listing_id, quantity, listings(name, image_url, discount_price, original_price, weight, delivery_options, delivery_type, delivery_service, delivery_fee, latitude, longitude, seller_name)")
       .eq("user_id", user.id);
 
     const mapped = (data || []).map((row: any) => ({
