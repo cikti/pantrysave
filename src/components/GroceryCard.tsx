@@ -72,6 +72,9 @@ const GroceryCard = ({ item, index = 0 }: { item: GroceryItem; index?: number })
         <span className="text-[10px] font-medium bg-accent rounded-full px-2 py-0.5 w-fit mt-0.5 text-[#288157]">
           Save RM{saving}
         </span>
+        <span className="text-[10px] text-muted-foreground mt-0.5">
+          🫶 You're helping someone save RM{saving}!
+        </span>
       </div>
     </motion.button>
   );
