@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ShoppingCart, Info, Check, MapPin, Truck, MessageCircle, Clock, Zap } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Info, Check, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { motion, useScroll, useTransform } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
@@ -157,34 +157,23 @@ const ItemDetail = () => {
             🎉 You save RM{saving}
           </motion.div>
 
-          {/* All Delivery Options */}
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }} className="mt-4 space-y-2">
-            <p className="text-xs font-semibold text-foreground">Delivery Options</p>
+          {/* Delivery Options — compact chips */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.38 }} className="mt-3 flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] text-muted-foreground mr-0.5">Get it:</span>
             {deliveryOptions.map((opt) => {
               const isPickup = opt.key === "pickup";
-              const Icon = isPickup ? MapPin : opt.key === "grab" ? Zap : Truck;
+              const chipLabel = isPickup
+                ? `🚪 Pickup${distanceKm !== null ? ` ${distanceKm.toFixed(1)}km` : ""}`
+                : opt.key === "grab"
+                  ? `⚡ ${opt.label}${opt.fee > 0 ? ` RM${opt.fee}` : ""}`
+                  : `🚚 ${opt.label}${opt.fee > 0 ? ` RM${opt.fee}` : ""}`;
               return (
-                <div key={opt.key} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <Icon size={14} className="text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-foreground">{opt.label}</p>
-                    <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                      <Clock size={10} /> {opt.estimatedTime}
-                    </p>
-                    {isPickup && distanceKm !== null && (
-                      <p className="text-[11px] font-medium text-primary mt-0.5">
-                        📍 {distanceKm.toFixed(1)}km from you
-                      </p>
-                    )}
-                  </div>
-                  <span className="text-xs font-semibold shrink-0">
-                    {opt.fee > 0 ? <span className="text-primary">RM{opt.fee.toFixed(2)}</span> : <span className="text-muted-foreground">Free</span>}
-                  </span>
-                </div>
+                <span key={opt.key} className="inline-flex items-center text-[11px] font-medium text-foreground bg-muted/70 border border-border px-2 py-0.5 rounded-full">
+                  {chipLabel}
+                </span>
               );
             })}
+            <span className="text-[10px] text-muted-foreground/60 ml-1">Select at checkout</span>
           </motion.div>
 
           {/* Expiry info */}
