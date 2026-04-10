@@ -140,7 +140,10 @@ const MapPage = () => {
                   <MapPin size={12} /> Enable location to see nearby products
                 </span>
               ) : userPos ? (
-                "Tap a marker to see item details"
+                <span>
+                  Tap a marker to see item details
+                  {locationTimeAgo && <span className="ml-1 text-[10px] text-muted-foreground/70">· Updated {locationTimeAgo}</span>}
+                </span>
               ) : (
                 "Getting your location…"
               )}
