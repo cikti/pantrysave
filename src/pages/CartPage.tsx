@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info, Square, CheckSquare, Tag, X, AlertTriangle, Clock } from "lucide-react";
+import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info, Square, CheckSquare, Tag, X, Clock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
