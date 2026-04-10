@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info, Square, CheckSquare, Tag, X, AlertTriangle, Clock } from "lucide-react";
+import { Trash2, ShoppingCart, ArrowLeft, MapPin, Truck, Check, Info, Square, CheckSquare, Tag, X, Clock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCart, CartItem } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
@@ -125,20 +125,22 @@ const CartPage = () => {
     return [...allOptions.values()];
   }, [selectedItems]);
 
-  // Distance to seller for pickup alert
-  const distanceInfo = useMemo(() => {
-    if (!buyerPos || deliveryChoice !== "pickup") return null;
-    let maxDist = 0;
+  // Pickup info: seller name, address, distance
+  const pickupInfo = useMemo(() => {
+    if (deliveryChoice !== "pickup") return null;
+    const sellers: { name: string; address: string; distance: number | null }[] = [];
+    const seen = new Set<string>();
     for (const item of selectedItems) {
-      const lat = (item.listing as any)?.latitude;
-      const lng = (item.listing as any)?.longitude;
-      if (lat && lng) {
-        const d = haversineKm(buyerPos[0], buyerPos[1], lat, lng);
-        if (d > maxDist) maxDist = d;
-      }
+      const listing = item.listing as any;
+      const key = listing?.seller_name || listing?.name || "Seller";
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const lat = listing?.latitude;
+      const lng = listing?.longitude;
+      const dist = buyerPos && lat && lng ? haversineKm(buyerPos[0], buyerPos[1], lat, lng) : null;
+      sellers.push({ name: key, address: listing?.address || "", distance: dist });
     }
-    if (maxDist === 0) return null;
-    return { distance: maxDist };
+    return sellers.length > 0 ? sellers : null;
   }, [buyerPos, deliveryChoice, selectedItems]);
 
   const chosenOption = availableDeliveryOptions.find((o) => o.key === deliveryChoice);
@@ -530,47 +532,20 @@ const CartPage = () => {
                   })}
                 </div>
 
-                {/* Distance alert for pickup */}
-                {deliveryChoice === "pickup" && distanceInfo && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    className="mt-3"
-                  >
-                    {distanceInfo.distance > 5 ? (
-                      <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs">
-                        <AlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-600" />
-                        <div>
-                          <p className="font-semibold text-amber-800">
-                            ⚠️ This seller is {distanceInfo.distance.toFixed(1)}km away from you
-                          </p>
-                          <p className="text-amber-700 mt-0.5">
-                            Pickup may take ~{Math.ceil(distanceInfo.distance * 3)} minutes by car. Consider using delivery instead if available.
-                          </p>
-                          {availableDeliveryOptions.some((o) => o.key !== "pickup") && (
-                            <button
-                              onClick={() => setDeliveryChoice(null)}
-                              className="mt-1.5 text-amber-800 font-semibold underline"
-                            >
-                              View delivery options →
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ) : distanceInfo.distance <= 3 ? (
-                      <div className="flex items-start gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs">
-                        <Check size={16} className="shrink-0 mt-0.5 text-emerald-600" />
-                        <p className="text-emerald-700">
-                          ✅ Great news! This seller is only {distanceInfo.distance.toFixed(1)}km away — just around the corner! Pickup will be quick and easy. 😊
+                {/* Inline pickup reminder banner */}
+                {deliveryChoice === "pickup" && pickupInfo && (
+                  <div className="mt-3 space-y-2">
+                    {pickupInfo.map((seller, idx) => (
+                      <div key={idx} className="flex items-start gap-2 p-3 rounded-xl bg-accent/60 border border-border text-xs">
+                        <MapPin size={14} className="shrink-0 mt-0.5 text-primary" />
+                        <p className="text-foreground">
+                          ⚠️ Self Pickup selected. Please collect from <span className="font-semibold">{seller.name}</span>
+                          {seller.address && <> at <span className="font-semibold">{seller.address}</span></>}.
+                          {seller.distance !== null && <> Distance: <span className="font-semibold">{seller.distance.toFixed(1)}km</span> from you.</>}
                         </p>
                       </div>
-                    ) : (
-                      <div className="flex items-start gap-2 p-3 rounded-xl bg-muted/50 text-xs text-muted-foreground">
-                        <MapPin size={14} className="shrink-0 mt-0.5 text-primary" />
-                        <span>📍 Seller is {distanceInfo.distance.toFixed(1)}km away. Pickup is available.</span>
-                      </div>
-                    )}
-                  </motion.div>
+                    ))}
+                  </div>
                 )}
 
                 {deliveryChoice && deliveryChoice !== "pickup" && (
