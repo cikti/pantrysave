@@ -38,7 +38,15 @@ const MapPage = () => {
   const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<PreviewItem | null>(null);
   const { data: dbListings } = useListings();
-  const { position: userPos, error: locError, loading: locLoading, refresh: refreshLocation } = useGeolocation();
+  const { position: userPos, error: locError, loading: locLoading, refresh: refreshLocation, updatedAt } = useGeolocation();
+
+  const locationTimeAgo = (() => {
+    if (!updatedAt) return null;
+    const diff = Math.floor((Date.now() - updatedAt) / 1000);
+    if (diff < 60) return "just now";
+    const mins = Math.floor(diff / 60);
+    return `${mins} min${mins > 1 ? "s" : ""} ago`;
+  })();
 
   useEffect(() => {
     if (!mapRef.current) return;
