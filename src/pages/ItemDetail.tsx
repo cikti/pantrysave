@@ -156,6 +156,9 @@ const ItemDetail = () => {
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.35 }} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary bg-accent px-3 py-1 rounded-full">
             🎉 You save RM{saving}
           </motion.div>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.37 }} className="mt-1.5 text-xs text-muted-foreground">
+            🫶 You're helping someone save RM{saving}!
+          </motion.p>
 
           {/* Delivery Options — compact chips */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.38 }} className="mt-3 flex flex-wrap items-center gap-1.5">
