@@ -125,20 +125,22 @@ const CartPage = () => {
     return [...allOptions.values()];
   }, [selectedItems]);
 
-  // Distance to seller for pickup alert
-  const distanceInfo = useMemo(() => {
-    if (!buyerPos || deliveryChoice !== "pickup") return null;
-    let maxDist = 0;
+  // Pickup info: seller name, address, distance
+  const pickupInfo = useMemo(() => {
+    if (deliveryChoice !== "pickup") return null;
+    const sellers: { name: string; address: string; distance: number | null }[] = [];
+    const seen = new Set<string>();
     for (const item of selectedItems) {
-      const lat = (item.listing as any)?.latitude;
-      const lng = (item.listing as any)?.longitude;
-      if (lat && lng) {
-        const d = haversineKm(buyerPos[0], buyerPos[1], lat, lng);
-        if (d > maxDist) maxDist = d;
-      }
+      const listing = item.listing as any;
+      const key = listing?.seller_name || listing?.name || "Seller";
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const lat = listing?.latitude;
+      const lng = listing?.longitude;
+      const dist = buyerPos && lat && lng ? haversineKm(buyerPos[0], buyerPos[1], lat, lng) : null;
+      sellers.push({ name: key, address: listing?.address || "", distance: dist });
     }
-    if (maxDist === 0) return null;
-    return { distance: maxDist };
+    return sellers.length > 0 ? sellers : null;
   }, [buyerPos, deliveryChoice, selectedItems]);
 
   const chosenOption = availableDeliveryOptions.find((o) => o.key === deliveryChoice);
