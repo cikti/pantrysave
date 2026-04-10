@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 const CACHE_KEY = "pantrysave_user_location";
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -9,13 +9,13 @@ type CachedLocation = {
   timestamp: number;
 };
 
-function getCached(): [number, number] | null {
+function getCached(): { coords: [number, number]; timestamp: number } | null {
   try {
     const raw = sessionStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const cached: CachedLocation = JSON.parse(raw);
     if (Date.now() - cached.timestamp > CACHE_TTL) return null;
-    return [cached.lat, cached.lng];
+    return { coords: [cached.lat, cached.lng], timestamp: cached.timestamp };
   } catch {
     return null;
   }
@@ -26,11 +26,13 @@ function setCache(lat: number, lng: number) {
 }
 
 export function useGeolocation() {
-  const [position, setPosition] = useState<[number, number] | null>(getCached);
+  const cached = getCached();
+  const [position, setPosition] = useState<[number, number] | null>(cached?.coords ?? null);
   const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(!getCached());
+  const [loading, setLoading] = useState(!cached);
+  const [updatedAt, setUpdatedAt] = useState<number | null>(cached?.timestamp ?? null);
 
-  const requestLocation = () => {
+  const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setError(true);
       setLoading(false);
@@ -43,6 +45,8 @@ export function useGeolocation() {
         const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
         setPosition(coords);
         setCache(coords[0], coords[1]);
+        const now = Date.now();
+        setUpdatedAt(now);
         setLoading(false);
       },
       () => {
@@ -51,19 +55,17 @@ export function useGeolocation() {
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
-  };
+  }, []);
 
   useEffect(() => {
-    if (position) {
-      setLoading(false);
-    }
+    if (position) setLoading(false);
     requestLocation();
   }, []);
 
-  const refresh = () => {
+  const refresh = useCallback(() => {
     sessionStorage.removeItem(CACHE_KEY);
     requestLocation();
-  };
+  }, [requestLocation]);
 
-  return { position, error, loading, refresh };
+  return { position, error, loading, refresh, updatedAt };
 }
