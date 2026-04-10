@@ -234,8 +234,6 @@ const SellPage = () => {
 
           {/* Quantity & Weight */}
           <QuantityWeightInput
-            quantity={form.quantity}
-            onQuantityChange={(v) => update("quantity", v)}
             weightVal={form.weightVal}
             onWeightValChange={(v) => update("weightVal", v)}
           />
