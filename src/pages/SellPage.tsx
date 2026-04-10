@@ -39,12 +39,8 @@ const SellPage = () => {
     longitude: null as number | null,
     address: "",
     reason: "",
-    pricingType: "fixed" as "fixed" | "flexible",
-    unitType: "quantity" as "kg" | "g" | "quantity",
     quantity: 1,
     weightVal: "",
-    maxQuantity: "1",
-    pricePerUnit: "",
   });
 
   const update = (key: string, val: any) =>
@@ -85,7 +81,6 @@ const SellPage = () => {
         }
       }
 
-      // Fetch seller name from profile
       const { data: profile } = await supabase
         .from("profiles")
         .select("name")
@@ -96,26 +91,10 @@ const SellPage = () => {
       const hasThirdParty = form.deliveryOptions.some(o => o !== "pickup");
       const deliveryType = hasThirdParty ? "third_party" : "pickup";
       const deliveryService = hasThirdParty ? form.deliveryOptions.find(o => o !== "pickup") : undefined;
-
-      // Calculate max delivery fee from selected options
       const deliveryFee = Math.max(0, ...form.deliveryOptions.map(o => form.deliveryFees[o] ?? DELIVERY_DEFAULTS[o].fee));
 
-      // Build weight string for display
-      const weightStr = form.pricingType === "fixed"
-        ? `${form.quantity} pcs`
-        : form.unitType === "quantity"
-          ? `${form.maxQuantity} pcs`
-          : `${form.weightVal} ${form.unitType}`;
+      const weightStr = form.weightVal || `${form.quantity} pcs`;
 
-      const discountPrice = form.pricingType === "fixed"
-        ? parseFloat(form.discountPrice)
-        : parseFloat(form.pricePerUnit);
-
-      const maxQty = form.pricingType === "flexible"
-        ? (form.unitType === "quantity" ? parseFloat(form.maxQuantity) : parseFloat(form.weightVal))
-        : form.quantity;
-
-      // Build delivery_options JSON
       const deliveryOptionsJson = form.deliveryOptions.map(key => ({
         key,
         label: DELIVERY_DEFAULTS[key].label,
@@ -129,7 +108,7 @@ const SellPage = () => {
         condition: form.condition || undefined,
         weight: weightStr || undefined,
         original_price: parseFloat(form.originalPrice),
-        discount_price: discountPrice,
+        discount_price: parseFloat(form.discountPrice),
         image_url,
         latitude: form.latitude ?? undefined,
         longitude: form.longitude ?? undefined,
@@ -140,11 +119,10 @@ const SellPage = () => {
         seller_name: sellerName,
         reason: form.reason || `${form.condition || "Discounted"} — perfectly good to use.`,
         expiry_days: form.condition === "Near Expiry" ? form.expiryDays : undefined,
-        pricing_type: form.pricingType,
-        price_per_unit: form.pricingType === "flexible" ? parseFloat(form.pricePerUnit) : undefined,
-        unit_type: form.pricingType === "flexible" ? form.unitType : "quantity",
-        max_quantity: maxQty || undefined,
-        stock_quantity: maxQty ? Math.floor(maxQty) : 1,
+        pricing_type: "fixed",
+        unit_type: "quantity",
+        max_quantity: form.quantity || undefined,
+        stock_quantity: form.quantity || 1,
         delivery_options: deliveryOptionsJson,
       } as any);
 
@@ -164,7 +142,7 @@ const SellPage = () => {
     imagePreview,
     form.name && form.category && form.condition,
     form.latitude && form.longitude,
-    form.originalPrice && (form.pricingType === "fixed" ? form.discountPrice : form.pricePerUnit),
+    form.originalPrice && form.discountPrice,
   ];
   const activeStep = filledFields.filter(Boolean).length;
 
@@ -254,18 +232,12 @@ const SellPage = () => {
             </select>
           </div>
 
-          {/* Quantity / Weight / Pricing Type */}
+          {/* Quantity & Weight */}
           <QuantityWeightInput
-            pricingType={form.pricingType}
-            onPricingTypeChange={(v) => update("pricingType", v)}
-            unitType={form.unitType}
-            onUnitTypeChange={(v) => update("unitType", v)}
             quantity={form.quantity}
             onQuantityChange={(v) => update("quantity", v)}
             weightVal={form.weightVal}
             onWeightValChange={(v) => update("weightVal", v)}
-            maxQuantity={form.maxQuantity}
-            onMaxQuantityChange={(v) => update("maxQuantity", v)}
           />
 
           {/* Condition */}
@@ -303,50 +275,26 @@ const SellPage = () => {
             onFeeChange={(key, fee) => update("deliveryFees", { ...form.deliveryFees, [key]: fee })}
           />
 
-          {form.pricingType === "fixed" ? (
-            <div className="grid grid-cols-2 gap-3">
-              <InputField
-                label="Original Price (RM)"
-                value={form.originalPrice}
-                onChange={(v) => update("originalPrice", v)}
-                placeholder="0.00"
-                type="number"
-              />
-              <InputField
-                label="Discount Price (RM)"
-                value={form.discountPrice}
-                onChange={(v) => update("discountPrice", v)}
-                placeholder="0.00"
-                type="number"
-              />
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <InputField
-                  label="Original Price (RM)"
-                  value={form.originalPrice}
-                  onChange={(v) => update("originalPrice", v)}
-                  placeholder="0.00"
-                  type="number"
-                />
-                <InputField
-                  label={`Price per ${form.unitType === "quantity" ? "unit" : form.unitType} (RM)`}
-                  value={form.pricePerUnit}
-                  onChange={(v) => update("pricePerUnit", v)}
-                  placeholder="0.00"
-                  type="number"
-                />
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                Buyer will pay: RM{form.pricePerUnit || "0"} × amount selected
-              </p>
-            </div>
-          )}
+          <div className="grid grid-cols-2 gap-3">
+            <InputField
+              label="Original Price (RM)"
+              value={form.originalPrice}
+              onChange={(v) => update("originalPrice", v)}
+              placeholder="0.00"
+              type="number"
+            />
+            <InputField
+              label="Discount Price (RM)"
+              value={form.discountPrice}
+              onChange={(v) => update("discountPrice", v)}
+              placeholder="0.00"
+              type="number"
+            />
+          </div>
 
           <motion.button
             type="submit"
-            disabled={submitting || !form.name || !form.originalPrice || (form.pricingType === "fixed" ? !form.discountPrice : !form.pricePerUnit)}
+            disabled={submitting || !form.name || !form.originalPrice || !form.discountPrice}
             whileTap={{ scale: 0.96 }}
             className="w-full bg-primary text-primary-foreground font-semibold py-4 rounded-2xl shadow-lg transition-transform disabled:opacity-50"
           >
