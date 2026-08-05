@@ -42,8 +42,7 @@ It enables users to list and sell surplus food items, while others can browse, r
 ## 🛠️ Technologies Used
 
 - Lovable — Full-stack prototyping platform  
-- ChatGPT — UI/UX design & feature planning  
-- HTML / CSS / JavaScript (if applicable)
+- HTML / CSS / JavaScript
 
 ---
 
